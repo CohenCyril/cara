@@ -949,7 +949,7 @@ Proof. by move=> [FT _ +] P fP => /(_ setT); apply. Qed.
 Lemma filter_app (T : Type) (F : set (set T)) :
   Filter F -> forall P Q : set T, F (fun x => P x -> Q x) -> F P -> F Q.
 Proof. by move=> FF P Q subPQ FP; near=> x; suff: P x; near: x.
-Grab Existential Variables. by end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Lemma filter_app2 (T : Type) (F : set (set T)) :
   Filter F -> forall P Q R : set T,  F (fun x => P x -> Q x -> R x) ->
@@ -1132,7 +1132,7 @@ move=> f_totalfun FF; rewrite /fmapi; apply: Build_Filter.
     by exists y; split => //; split => //; rewrite [y](fx_prop _ z).
 - move=> /= P Q subPQ FP; near=> x.
   by have [//|y [fxy /subPQ Qy]] := near FP x; exists y.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Typeclasses Opaque fmapi.
 
@@ -1189,7 +1189,7 @@ Lemma cvg_near_const (T U : Type) (f : T -> U) (F : set (set T)) (G : set (set U
 Proof.
 move=> FF FG fFG P /= GP; rewrite !near_simpl; apply: (have_near G).
 by apply: filter_app fFG; near=> y => /=; apply: filterS => x /= ->; near: y.
-Grab Existential Variables. all: by end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 (* globally filter *)
 
@@ -1345,7 +1345,7 @@ Lemma cvg_pair {T U V F} {G : set (set U)} {H : set (set V)}
 Proof.
 move=> fFG gFH P; rewrite !near_simpl => -[[A B] /=[GA HB] ABP]; near=> x.
 by apply: (ABP (_, _)); split=> //=; near: x; [apply: fFG|apply: gFH].
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Lemma cvg_comp2 {T U V W}
   {F : set (set T)} {G : set (set U)} {H : set (set V)} {I : set (set W)}
@@ -1655,7 +1655,7 @@ Lemma near_bind (T : topologicalType) (P Q : set T) (x : T) :
 Proof.
 move=> PQ xP; near=> y; apply: (near PQ y) => //;
 by apply: (near (near_join xP) y).
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 (* limit composition *)
 
@@ -1706,8 +1706,7 @@ Arguments near_cst_continuous {T U} l [f x].
 Lemma cvg_cst (U : topologicalType) (x : U) (T : Type)
     (F : set (set T)) {FF : Filter F} :
   (fun _ : T => x) @ F --> x.
-Proof. by apply: cvg_near_cst; near=> x0.
-Grab Existential Variables. all: end_near. Qed.
+Proof. by apply: cvg_near_cst; near=> x0. Unshelve. all: by end_near. Qed.
 Arguments cvg_cst {U} x {T F FF}.
 Hint Resolve cvg_cst : core.
 
@@ -1728,7 +1727,7 @@ Lemma within_nbhsW {T : topologicalType} (A : set T) (x : T) :
   A x -> within A (nbhs x) `=>` globally A.
 Proof.
 move=> Ax P AP; rewrite /within; near=> y; apply: AP.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 (* [locally P] replaces a (globally A) in P by a within A (nbhs x)      *)
 (* Can be combined with a notation taking a filter as its last argument *)
@@ -2815,7 +2814,7 @@ suff f_totalfun: infer {near F, is_totalfun f} by exact: cvg_close fFl fFl'.
 apply: filter_app f_prop; near=> x; split=> //=; near: x.
 have: (f `@ F) setT by apply: fFl; apply: filterT.
 by rewrite fmapiE; apply: filterS => x [y []]; exists y.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 Definition cvg_toi_locally_close := @cvgi_close.
 
 Lemma open_hausdorff : hausdorff T =
@@ -3243,7 +3242,7 @@ split=> - cfx P /= fxP.
 rewrite !nbhs_nearE !near_map !near_nbhs in fxP *; have /= := cfx P fxP.
 rewrite !near_simpl near_withinE near_simpl => Pf; near=> y.
 by have [->|] := eqVneq y x; [by apply: nbhs_singleton|near: y].
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Section uniform_closeness.
 
@@ -3471,7 +3470,7 @@ have -> : Q =
   \bigcap_(ij in [set k | k \in [fset x in predT]%fset]) P ij.1 ij.2.
   by rewrite predeqE => t; split=> Qt ij _; apply: Qt => //=; rewrite !inE.
 by apply: filter_bigI => ??; apply: entP.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 (** Functional metric spaces *)
 
@@ -3539,7 +3538,7 @@ split.
   by apply: (Ff [set fg | forall t : T, A (fg.1 t, fg.2 t)]); exists A.
 move=> Ff; apply/cvg_entourageP => A [P entP sPA]; near=> g.
 by apply: sPA => /=; near: g; apply: Ff.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Definition entourage_set (U : uniformType) (A : set ((set U) * (set U))) :=
   exists2 B, entourage B & forall PQ, A PQ -> forall p q,
@@ -4093,7 +4092,7 @@ apply: subset_split_ent => //; exists (M' i j) => /=.
   by near: M'; rewrite mxE; apply: cvF.
 move: (i) (j); near: M'; near: M; apply: nearP_dep; apply: Fc.
 by exists (fun _ _ => (split_ent A)^-1%classic) => ?? //; apply: entourage_inv.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Canonical matrix_completeType := CompleteType 'M[T]_(m, n) mx_complete.
 
@@ -4116,7 +4115,7 @@ apply: (entourage_split (g t)) => //; first by near: g; apply: cvF.
 move: (t); near: g; near: f; apply: nearP_dep; apply: Fc.
 exists ((split_ent A)^-1)%classic=> //=.
 by apply: entourage_inv; apply: entourage_split_ent.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Canonical fun_completeType := CompleteType (T -> U) fun_complete.
 
@@ -4139,7 +4138,7 @@ apply: (entourage_split (f x1 x2)) => //.
   by near: x2; apply/(fh x1 (to_set _ _)) => /=.
 move: (x2); near: x1; have /cvg_fct_entourageP /(_ (_^-1%classic)):= fg; apply.
 exact: entourage_inv.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Lemma cvg_switch_2 {U : completeType}
   F1 {FF1 : ProperFilter F1} F2 {FF2 : ProperFilter F2}
@@ -4158,7 +4157,7 @@ apply: (entourage_split (g x2)) => //; move: (x2); [near: x1|near: y1].
   have /cvg_fct_entourageP /(_ (_^-1)%classic) := fg; apply.
   exact: entourage_inv.
 by have /cvg_fct_entourageP := fg; apply.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 
 Lemma cvg_switch {U : completeType}
   F1 (FF1 : ProperFilter F1) F2 (FF2 : ProperFilter F2)
@@ -4188,7 +4187,7 @@ split=> cauchyF; last first.
   by move=> _/posnumP[eps]; apply/cauchyF/entourage_ball.
 move=> U; rewrite -entourage_ballE => - [_/posnumP[eps] xyepsU].
 by near=> x; apply: xyepsU; near: x; apply: cauchyF.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 Arguments cauchy_ballP {R T} F {FF}.
 
 Lemma cauchy_exP (R : numFieldType) (T : pseudoMetricType R)
@@ -4198,7 +4197,7 @@ Proof.
 move=> Fc A; rewrite !nbhs_simpl /= -entourage_ballE => -[_/posnumP[e] sdeA].
 have /Fc [z /= Fze] := [gt0 of e%:num / 2]; near=> x y; apply: sdeA => /=.
 by apply: (@ball_splitr _ _ z); [near: x|near: y].
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 Arguments cauchy_exP {R T} F {FF}.
 
 Lemma cauchyP (R : numFieldType) (T : pseudoMetricType R)
@@ -4208,7 +4207,7 @@ Proof.
 split=> [Fcauchy _/posnumP[e] |/cauchy_exP//].
 near F => x; exists x; near: x; apply: (@nearP_dep _ _ F F).
 exact/Fcauchy/entourage_ball.
-Grab Existential Variables. all: end_near. Qed.
+Unshelve. all: by end_near. Qed.
 Arguments cauchyP {R T} F {PF}.
 
 Module CompletePseudoMetric.
