@@ -89,7 +89,7 @@ Import numFieldTopology.Exports.
 
 Local Open Scope ring_scope.
 
-Inductive extended (R : Type) := EFin of R | EPInf | ENInf.
+Variant extended (R : Type) := EFin of R | EPInf | ENInf.
 
 Notation "+oo" := (@EPInf _) : ereal_scope.
 Notation "-oo" := (@ENInf _) : ereal_scope.
