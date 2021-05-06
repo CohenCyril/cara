@@ -588,9 +588,30 @@ Qed.
 Lemma adde_ge0 x y : 0%:E <= x -> 0%:E <= y -> 0%:E <= x + y.
 Proof. by move: x y => [r0| |] [r1| |] // ? ?; rewrite !lee_fin addr_ge0. Qed.
 
+Lemma adde_le0 x y : x <= 0%:E -> y <= 0%:E -> x + y <= 0%:E.
+Proof.
+move: x y => [r0| |] [r1| |]// ? ?; rewrite !lee_fin -(addr0 0); exact: ler_add.
+Qed.
+
 Lemma sume_ge0 T (f : T -> \bar R) (P : pred T) :
   (forall t, P t -> 0%:E <= f t) -> forall l, 0%:E <= \sum_(i <- l | P i) f i.
 Proof. by move=> f0 l; elim/big_rec : _ => // t x Pt; apply/adde_ge0/f0. Qed.
+
+Lemma sume_le0 T (f : T -> \bar R) (P : pred T) :
+  (forall t, P t -> f t <= 0%:E) -> forall l, \sum_(i <- l | P i) f i <= 0%:E.
+Proof. by move=> f0 l; elim/big_rec : _ => // t x Pt; apply/adde_le0/f0. Qed.
+
+Lemma oppe_ge0 x : (0%:E <= - x) = (x <= 0%:E).
+Proof. by case: x => [x| |] //; rewrite !lee_fin oppr_ge0. Qed.
+
+Lemma oppe_gt0 x : (0%:E < - x) = (x < 0%:E).
+Proof. by case: x => [x| |] //; rewrite !lte_fin oppr_gt0. Qed.
+
+Lemma oppe_le0 x : (- x <= 0%:E) = (0%:E <= x).
+Proof. by case: x => [x| |] //; rewrite !lee_fin oppr_le0. Qed.
+
+Lemma oppe_lt0 x : (- x < 0%:E) = (0%:E < x).
+Proof. by case: x => [x| |] //; rewrite !lte_fin oppr_lt0. Qed.
 
 End ERealArithTh_numDomainType.
 
@@ -635,6 +656,9 @@ move: x y => [r| |] [r'| |] //=; rewrite ?lte_pinfty ?lte_ninfty //.
 by rewrite !lte_fin ltr_oppr.
 Qed.
 
+Lemma lte_opp x y : (- x < - y) = (y < x).
+Proof. by rewrite lte_oppl oppeK. Qed.
+
 Lemma lte_add a b x y : a < b -> x < y -> a + x < b + y.
 Proof.
 move: a b x y => [a| |] [b| |] [x| |] [y| |]; rewrite ?(lte_pinfty,lte_ninfty)//.
@@ -650,10 +674,31 @@ Qed.
 Lemma lee_addr x y : 0%:E <= y -> x <= y + x.
 Proof. by rewrite addeC; exact: lee_addl. Qed.
 
+Lemma gee_addl x y : y <= 0%:E -> x + y <= x.
+Proof.
+move: x y => -[ x [y| |]//= | [| |]// | [| | ]//];
+  by [rewrite !lee_fin ger_addl | move=> _; exact: lee_ninfty].
+Qed.
+
+Lemma gee_addr x y : y <= 0%:E -> y + x <= x.
+Proof. rewrite addeC; exact: gee_addl. Qed.
+
 Lemma lte_addl r x : 0%:E < x -> r%:E < r%:E + x.
 Proof.
 by move: x => [x| |] //; rewrite ?lte_pinfty ?lte_ninfty // !lte_fin ltr_addl.
 Qed.
+
+Lemma lte_addr r x : 0%:E < x -> r%:E < x + r%:E.
+Proof. rewrite addeC; exact: lte_addl. Qed.
+
+Lemma gte_subl r x : 0%:E < x -> r%:E - x < r%:E.
+Proof.
+move: x => [x| |] //; rewrite addeC /= ?lte_ninfty //.
+by rewrite !lte_fin gtr_addr ltr_oppl oppr0.
+Qed.
+
+Lemma gte_subr r x : 0%:E < x -> - x + r%:E < r%:E.
+Proof. rewrite addeC; exact: gte_subl. Qed.
 
 Lemma lte_add2lE (r : R) a b : (r%:E + a < r%:E + b) = (a < b).
 Proof.
@@ -697,6 +742,12 @@ move: x y z t => -[x| |] -[y| |] -[z| |] -[t| |] //=;
 by rewrite !lee_fin; exact: ler_sub.
 Qed.
 
+Lemma lte_le_sub r t x y : x < r%:E -> t%:E <= y -> x - y < r%:E - t%:E.
+Proof.
+move: x y => [x| |] [y| |]; rewrite ?(lte_pinfty,lte_ninfty)//.
+by rewrite !lte_fin => xltr tley; apply: ltr_le_add; rewrite // ler_oppl opprK.
+Qed.
+
 Lemma lee_sum I (f g : I -> \bar R) s (P : pred I) :
   (forall i, P i -> f i <= g i) ->
   \sum_(i <- s | P i) f i <= \sum_(i <- s | P i) g i.
@@ -710,6 +761,14 @@ move=> QP PQf; rewrite big_mkcond [X in _ <= X]big_mkcond lee_sum// => i.
 by move/implyP: (QP i); move: (PQf i); rewrite !inE -!topredE/=; do !case: ifP.
 Qed.
 
+Lemma lee_sum_npos_subset I (s : seq I) (P Q : {pred I}) (f : I -> \bar R) :
+  {subset Q <= P} -> {in [predD P & Q], forall i, f i <= 0%:E} ->
+  \sum_(i <- s | P i) f i <= \sum_(i <- s | Q i) f i.
+Proof.
+move=> QP PQf; rewrite big_mkcond [X in _ <= X]big_mkcond lee_sum// => i.
+by move/implyP: (QP i); move: (PQf i); rewrite !inE -!topredE/=; do !case: ifP.
+Qed.
+
 Lemma lee_sum_nneg (I : eqType) (s : seq I) (P Q : pred I)
   (f : I -> \bar R) : (forall i, P i -> ~~ Q i -> 0%:E <= f i) ->
   \sum_(i <- s | P i && Q i) f i <= \sum_(i <- s | P i) f i.
@@ -718,12 +777,28 @@ move=> PQf; rewrite [X in _ <= X](bigID Q) /= -[X in X <= _]adde0 lee_add //.
 by rewrite sume_ge0// => i /andP[]; exact: PQf.
 Qed.
 
+Lemma lee_sum_npos (I : eqType) (s : seq I) (P Q : pred I)
+  (f : I -> \bar R) : (forall i, P i -> ~~ Q i -> f i <= 0%:E) ->
+  \sum_(i <- s | P i) f i <= \sum_(i <- s | P i && Q i) f i.
+Proof.
+move=> PQf; rewrite [X in X <= _](bigID Q) /= -[X in _ <= X]adde0 lee_add //.
+by rewrite sume_le0// => i /andP[]; exact: PQf.
+Qed.
+
 Lemma lee_sum_nneg_ord (f : nat -> \bar R) (P : pred nat) :
   (forall n, P n -> 0%:E <= f n) ->
   {homo (fun n => \sum_(i < n | P i) (f i)) : i j / (i <= j)%N >-> i <= j}.
 Proof.
 move=> f0 i j le_ij; rewrite (big_ord_widen_cond j) // big_mkcondr /=.
 by rewrite lee_sum // => k ?; case: ifP => // _; exact: f0.
+Qed.
+
+Lemma lee_sum_npos_ord (f : nat -> \bar R) (P : pred nat) :
+  (forall n, P n -> f n <= 0%:E)%E ->
+  {homo (fun n => \sum_(i < n | P i) (f i)) : i j / (i <= j)%N >-> j <= i}.
+Proof.
+move=> f0 m n ?; rewrite [X in _ <= X](big_ord_widen_cond n) // big_mkcondr /=.
+rewrite lee_sum // => i ?; case: ifP => // _; exact: f0.
 Qed.
 
 Lemma lee_sum_nneg_natr (f : nat -> \bar R) (P : pred nat) m :
@@ -735,12 +810,30 @@ apply: (@lee_sum_nneg_ord (fun k => f (k + m)%N) (fun k => P (k + m)%N));
   by [move=> n /f0; apply; rewrite leq_addl | rewrite leq_sub2r].
 Qed.
 
+Lemma lee_sum_npos_natr (f : nat -> \bar R) (P : pred nat) m :
+  (forall n, (m <= n)%N -> P n -> f n <= 0%:E) ->
+  {homo (fun n => \sum_(m <= i < n | P i) (f i)) : i j / (i <= j)%N >-> j <= i}.
+Proof.
+move=> f0 i j le_ij; rewrite -[m]add0n !big_addn !big_mkord.
+apply: (@lee_sum_npos_ord (fun k => f (k + m)%N) (fun k => P (k + m)%N));
+  by [move=> n /f0; apply; rewrite leq_addl | rewrite leq_sub2r].
+Qed.
+
 Lemma lee_sum_nneg_natl (f : nat -> \bar R) (P : pred nat) n :
   (forall m, (m < n)%N -> P m -> 0%:E <= f m) ->
   {homo (fun m => \sum_(m <= i < n | P i) (f i)) : i j / (i <= j)%N >-> j <= i}.
 Proof.
 move=> f0 i j le_ij; rewrite !big_geq_mkord/=.
 rewrite lee_sum_nneg_subset// => [k | k /and3P[_ /f0->//]].
+by rewrite ?inE -!topredE/= => /andP[-> /(leq_trans le_ij)->].
+Qed.
+
+Lemma lee_sum_npos_natl (f : nat -> \bar R) (P : pred nat) n :
+  (forall m, (m < n)%N -> P m -> f m <= 0%:E) ->
+  {homo (fun m => \sum_(m <= i < n | P i) (f i)) : i j / (i <= j)%N >-> i <= j}.
+Proof.
+move=> f0 i j le_ij; rewrite !big_geq_mkord/=.
+rewrite lee_sum_npos_subset// => [k | k /and3P[_ /f0->//]].
 by rewrite ?inE -!topredE/= => /andP[-> /(leq_trans le_ij)->].
 Qed.
 
@@ -754,6 +847,19 @@ rewrite -[X in X <= _]adde0 lee_add //.
   rewrite -big_mkcond /= {1}(_ : A = [fset x in B | x \in A]%fset) //.
   by apply/fsetP=> t; rewrite !inE /= andbC; case: (boolP (_ \in _)) => // /AB.
 rewrite big_fset /= big_seq_cond sume_ge0 // => t /andP[tB tA].
+by case: ifPn => // Pt; rewrite f0 // !inE tA.
+Qed.
+
+Lemma lee_sum_npos_subfset (T : choiceType) (A B : {fset T}%fset) (P : pred T)
+  (f : T -> \bar R) : {subset A <= B} ->
+  {in [predD B & A], forall t, P t -> f t <= 0%:E} ->
+  \sum_(t <- B | P t) f t <= \sum_(t <- A | P t) f t.
+Proof.
+move=> AB f0; rewrite big_mkcond (big_fsetID _ (mem A) B) /=.
+rewrite -[X in _ <= X]adde0 lee_add //.
+  rewrite -big_mkcond /= {3}(_ : A = [fset x in B | x \in A]%fset) //.
+  by apply/fsetP=> t; rewrite !inE /= andbC; case: (boolP (_ \in _)) => // /AB.
+rewrite big_fset /= big_seq_cond sume_le0 // => t /andP[tB tA].
 by case: ifPn => // Pt; rewrite f0 // !inE tA.
 Qed.
 
@@ -799,10 +905,16 @@ move: x y => [r0| |] [r1| |] //=; rewrite ?lee_pinfty ?lee_ninfty //.
 by rewrite !lee_fin ler_oppl.
 Qed.
 
+Lemma lee_opp x y : (- x <= - y) = (y <= x).
+Proof. by rewrite lee_oppl oppeK. Qed.
+
 End ERealArithTh_realDomainType.
 Arguments lee_sum_nneg_ord {R}.
+Arguments lee_sum_npos_ord {R}.
 Arguments lee_sum_nneg_natr {R}.
+Arguments lee_sum_npos_natr {R}.
 Arguments lee_sum_nneg_natl {R}.
+Arguments lee_sum_npos_natl {R}.
 
 Lemma lee_opp2 {R : realDomainType} : {mono @oppe R : x y /~ x <= y}.
 Proof.

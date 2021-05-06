@@ -8,6 +8,11 @@
   + lemmas `big_nat_widenl`, `big_geq_mkord`
   + lemmas `lee_sum_nneg_natr`, `lee_sum_nneg_natl`
   + lemmas `ereal_sup_gt`, `ereal_inf_lt`
+  + lemmas `adde_le0`, `sume_le0`, `oppe_ge0`, `oppe_gt0`, `oppe_le0`,
+    `oppe_lt0`, `lte_opp`, `gee_addl`, `gee_addr`, `lte_addr`,
+    `gte_subl`, `gte_subr`, `lte_le_sub`, `lee_sum_npos_subset`,
+    `lee_sum_npos`, `lee_sum_npos_ord`, `lee_sum_npos_natr`,
+    `lee_sum_npos_natl`, `lee_sum_npos_subfset`, `lee_opp`
 - in `sequences.v`:
   + notations `\sum_(i <oo) F i`
   + lemmas `ereal_pseries_sum_nat`, `lte_lim`
