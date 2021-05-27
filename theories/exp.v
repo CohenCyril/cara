@@ -198,18 +198,17 @@ pose f (x : R) i := (i == 0%nat)%:R + x *+ (i == 1%nat).
 have F n : (1 < n)%nat -> \sum_(0 <= i < n) (f x i) = 1 + x.
   move=> /subnK<-.
   by rewrite addn2 !big_nat_recl //= /f /= mulr1n !mulr0n big1 ?add0r ?addr0.  
-suff -> : 1 + x =  \sum_(i <oo) (f x i).
-  apply: ler_lim.
-  - apply: is_cvg_near_cst.
-    by near=> n; apply: F; near: n.
-  - by apply: is_cvg_series_exp_coeff.
-- near=> n.
-  apply: ler_sum => [] [|[|i]] _; 
+have -> : 1 + x =  \sum_(i <oo) (f x i).
+  apply/sym_equal/lim_near_cst => //.
+  by near=> n; apply: F; near: n.
+apply: ler_lim.
+- by apply: is_cvg_near_cst; near=> n; apply: F; near: n.
+- by apply: is_cvg_series_exp_coeff.
+near=> n.
+apply: ler_sum => [] [|[|i]] _; 
     rewrite /f /exp_coeff /= 
            !(mulr0n, mulr1n, expr0, expr1, divr1, addr0, add0r) //.
-  by rewrite exp_coeff_ge0.
-apply/sym_equal/lim_near_cst => //.
-by near=> n; apply: F; near: n.
+by rewrite exp_coeff_ge0.
 Grab Existential Variables. all: end_near.
 Qed.
 
