@@ -213,6 +213,13 @@ rewrite !big_mkord mulr_sumr; apply: eq_bigr => i _.
 by rewrite mulrCA -exprS subSn // -ltnS.
 Qed.
 
+Lemma powdiffE n (x y : R) : 
+   x ^+ n.+1 - y ^+ n.+1 = (x - y) * \sum_(0 <= i < n.+1) x ^+ i * y ^+ (n - i).
+Proof.
+rewrite big_nat_rev /= subrXX /= big_mkord //.
+by congr (_ * _); apply: eq_bigr => i _; rewrite subKn // -ltnS.
+Qed.
+
 Lemma cvg_series_bounded (f : nat -> R) :
   cvg (series f) ->  exists2 K, 0 < K & (forall i, `|f i| < K).
 Proof.
@@ -321,20 +328,80 @@ Qed.
 Lemma termdiff_P2 n (z h : R) :
   h != 0 ->
   ((z + h) ^+ n - (z ^+ n)) / h - n%:R * z ^+ n.-1 =
-  h * \sum_(0 <= i < n) z ^+ i *
-      \sum_(0 <= j < n - i) (z + h) ^+ j * z ^+ (n.-2 - i - j).
+  h * \sum_(0 <= i < n.-1) z ^+ i *
+      \sum_(0 <= j < n.-1 - i) (z + h) ^+ j * z ^+ (n.-2 - i - j).
 Proof.
 move=> hNZ; apply: (mulfI hNZ).
 rewrite mulrBr mulrC divfK //.
 case: n => [|n].
   by rewrite !expr0 !(mul0r, mulr0, subr0, subrr, big_geq).
-Check powdiff.
-rewrite powdiff.
-Search _ ((_ + _)^+ _).
+rewrite subrXX /= {1}[z + _]addrC addrK -mulrBr; congr (_ * _).
+rewrite -(big_mkord xpredT (fun i : nat => (z + h) ^+ (n - i) * z ^+ i)).
+rewrite big_nat_recr //= subnn expr0 -addrA -mulrBl.
+rewrite  -add1n natrD opprD addrA subrr sub0r mulNr.
+rewrite mulr_natl -{4}(subn0 n) -sumr_const_nat -sumrB.
+rewrite termdiff_P1 mulr_sumr !big_mkord; apply: eq_bigr => i _.
+rewrite mulrCA; congr (_ * _).
+rewrite subrXX {1}[z + _]addrC addrK big_nat_rev /= big_mkord.
+congr (_ * _); apply: eq_bigr => k _.
+by rewrite -!predn_sub subKn // -subnS.
+Qed.
+
+Lemma termdiff_P3 (z h : R) n K :
+ h != 0 -> `|z| <= K -> `|z + h| <= K ->
+    `|((z + h) ^+ n - z ^+ n) / h - n%:R * z ^+ n.-1|
+        <= n%:R * n.-1%:R * K ^+ n.-2 * `|h|.
+Proof.
+move=> hNZ zLK zhLk.
+have KP : 0 <= K by apply: le_trans zLK.
+rewrite termdiff_P2 // normrM mulrC.
+rewrite ler_pmul2r ?normr_gt0 //.
+apply: le_trans (ler_norm_sum _ _ _) _.
+rewrite -mulrA mulrC -mulrA.
+rewrite -{4}[n.-1]subn0 mulr_natl -sumr_const_nat.
+rewrite !big_mkord; apply: ler_sum => i _.
+rewrite normrM /=.
+case: n i => //= [[]//| n i].
+pose d := (n.-1 - i)%nat.
+rewrite -[(n - i)%nat]prednK ?subn_gt0 // predn_sub -/d.
+rewrite -(subnK (_ : i <= n.-1)%nat) -/d; last first.
+  by rewrite -ltnS prednK // (leq_trans _ (ltn_ord i)).
+rewrite addnC exprD mulrAC -mulrA.
+apply: ler_pmul => //.
+  by rewrite normrX ler_expn2r ?qualifE // (le_trans _ zLK).
+apply: le_trans (_ : d.+1%:R * K ^+ d <= _); last first.
+  rewrite ler_wpmul2r //; first by rewrite exprn_ge0 // (le_trans _ zLK).
+  rewrite ler_nat ltnS (leq_trans (leq_subr _ _)) // -ltnS prednK //.
+  by rewrite (leq_ltn_trans _ (ltn_ord i)).
+apply: le_trans (ler_norm_sum _ _ _) _.
+rewrite -{2}[d.+1]subn0 mulr_natl -sumr_const_nat.
+rewrite !big_mkord; apply: ler_sum => j _.
+rewrite -{4}(subnK (_ : j <= d)%nat) -1?ltnS // addnC exprD normrM.
+by apply: ler_pmul; rewrite // normrX ler_expn2r ?qualifE.
+Qed.
 
 
 
 
 
+
+   ?expr_gt0.
+have -> : n.+1 = (d.+2 + i)%nat.
+
+
+  Search (_ ^+ _) (_ <= _).
+   ^ _).
+ 
+
+Search (_ - _).-1.
+set u := (_ - i)%nat.
+set v := nat_of_ord.
+case: n.
+.
+ big_nat_const.
+Search "norm" "sum".
+rewrite norm_sum.
+Search (0 < `|_|).
+Search (_ * _ <= _ * _) "mul".
 
 End exp.
