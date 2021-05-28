@@ -380,6 +380,15 @@ rewrite -{4}(subnK (_ : j <= d)%nat) -1?ltnS // addnC exprD normrM.
 by apply: ler_pmul; rewrite // normrX ler_expn2r ?qualifE.
 Qed.
 
+Lemma nbhs0_lt (K : numFieldType) (V : normedModType K) (e : K) :
+   0 < e -> \forall x \near nbhs (0 : V), `|x| < e.
+Proof.
+move=> e_gt0; near=> x.
+apply: le_lt_trans (_ : e / 2 < _); last first.
+  by rewrite ltr_pdivr_mulr // mulr2n mulrDr mulr1 -subr_gt0 addrK.
+by near: x; apply: nbhs0_le; rewrite divr_gt0.
+Grab Existential Variables. all: end_near. Qed.
+
 Lemma termdiff_P4 (f : R -> R) K k :
   0 < k -> (forall h, 0 <= `|h| < k -> `|f h| <= K * `|h|) ->
     f x @[x --> 0 : R] --> (0 : R).
@@ -396,23 +405,17 @@ have : 0 <= K.
   by rewrite gtr0_norm.
 rewrite le_eqVlt => /orP[/eqP K_eq0| K_gt0].
   near=> x; rewrite sub0r normrN.
-  apply: le_lt_trans (_ :  K * `|x| < _).
-    apply: H; rewrite normr_ge0 /=; apply: le_lt_trans k2Lk.
-    by near: x; apply: nbhs0_le.
-  by rewrite -K_eq0 mul0r.
-pose eps1 := eps / 2.
-have eps1_gt0 : 0 < eps1 by rewrite divr_gt0.
-have eps1Leps : eps1 < eps.
-  by rewrite ltr_pdivr_mulr // mulr2n mulrDr mulr1 -subr_gt0 addrK.
-pose eps2 := eps1 / K.
+  apply: le_lt_trans (_ :  K * `|x| < _); last by rewrite -K_eq0 mul0r.
+  apply: H; rewrite normr_ge0 /=.
+  by near: x; apply: nbhs0_lt.
+pose eps2 := eps / K.
 have eps2_gt0 : 0 < eps2 by rewrite divr_gt0 // mulr_gt0.
 near=> x; rewrite sub0r normrN.
 apply: le_lt_trans (_ :  K * `|x| < _).
-  apply: H; rewrite normr_ge0 /=; apply: le_lt_trans k2Lk.
-  by near: x; apply: nbhs0_le.
-apply: le_lt_trans eps1Leps.
-rewrite mulrC -ler_pdivl_mulr // -/eps2.
-by near: x; apply: nbhs0_le.
+  apply: H; rewrite normr_ge0 /=.
+  by near: x; apply: nbhs0_lt.
+rewrite mulrC -ltr_pdivl_mulr // -/eps2.
+by near: x; apply: nbhs0_lt.
 Grab Existential Variables. all: end_near. Qed.
 
 End exp.
