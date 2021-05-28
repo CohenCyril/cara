@@ -380,28 +380,11 @@ rewrite -{4}(subnK (_ : j <= d)%nat) -1?ltnS // addnC exprD normrM.
 by apply: ler_pmul; rewrite // normrX ler_expn2r ?qualifE.
 Qed.
 
-
-
-
-
-
-   ?expr_gt0.
-have -> : n.+1 = (d.+2 + i)%nat.
-
-
-  Search (_ ^+ _) (_ <= _).
-   ^ _).
- 
-
-Search (_ - _).-1.
-set u := (_ - i)%nat.
-set v := nat_of_ord.
-case: n.
-.
- big_nat_const.
-Search "norm" "sum".
-rewrite norm_sum.
-Search (0 < `|_|).
-Search (_ * _ <= _ * _) "mul".
+Lemma termdiff_P4 (f : R -> R) K k :
+  0 < k -> (forall h, 0 < `|h| < k -> `|f h| <= K * `|h|) ->
+    f x @[x --> 0 : R] --> (0 : R).
+Proof.
+move=> k_gt0 H P /=; rewrite !nbhs_nearE => Hx0.
+Admitted.
 
 End exp.
