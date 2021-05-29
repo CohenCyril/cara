@@ -682,7 +682,7 @@ move=> cvg_series.
 rewrite (_ : u_ = fun n => series u_ (n + 1)%nat - series u_ n); last first.
   by rewrite funeqE => i; rewrite addn1 seriesSB.
 rewrite -(subrr (lim (series u_))).
-by apply: cvgD; rewrite ?cvg_shiftn//; apply: cvgN.
+by apply: cvgB => //; rewrite ?cvg_shiftn.
 Qed.
 
 Lemma nondecreasing_series (R : numFieldType) (u_ : R ^nat) :
@@ -796,6 +796,7 @@ Proof.
 move=> u_ge0 v_ge0 le_uv; have le_UV n : series u_ n <= series v_ n.
   by apply ler_sum => *; exact: le_uv.
 move=> /cvg_seq_bounded/pinfty_ex_gt0[/= M _ svM].
+Check nondecreasing_is_cvg.
 apply: (@nondecreasing_is_cvg _ _ M); first by apply: nondecreasing_series.
 by move=> n; apply: le_trans (svM n _); rewrite // ger0_norm ?sumr_ge0.
 Qed.
