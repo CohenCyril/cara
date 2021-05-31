@@ -81,17 +81,17 @@ rewrite -subr_ge0 [1 + _]addrC addrK //.
 by apply: sumr_ge0 => *; apply: addr_ge0.
 Qed.
 
-Lemma cvg_ext : forall (R : realType) (f g : (R) ^nat),
+Lemma eq_cvg_lim : forall (R : realType) (f g : (R) ^nat),
   f = g -> (f --> lim f) = (g --> lim g).
 Proof. by move=> R1 f1 g1 ->. Qed.
 
-Lemma cvg_extl (f g : R^nat) (x : R) : f = g -> (f --> x) = (g --> x).
+Lemma eq_cvgl (f g : R^nat) (x : R) : f = g -> (f --> x) = (g --> x).
 Proof. by move->. Qed. 
 
 Lemma cvgS (f : R^nat) (x : R) : (f \o S --> x) = (f --> x).
 Proof.
 have <- /= := @cvg_shiftn 1 _ f x.
-by apply/cvg_extl/funext => i; rewrite addn1.
+by apply/eq_cvgl/funext => i; rewrite addn1.
 Qed.
 
 Lemma is_cvg_seriesN (f : R^nat) : cvg (series f) -> cvg (series (-f)).
@@ -360,7 +360,7 @@ move=> s1 s2 Cx; rewrite -[lim _]subr0 {2}/series /=.
 have s2E n : 
   \sum_(0 <= i < n) s2 i = \sum_(0 <= i < n) s1 i - n%:R * f n * x ^+ n.-1.
   by rewrite diffs_sumE addrK. 
-rewrite (cvg_extl _ (funext s2E)).
+rewrite (eq_cvgl _ (funext s2E)).
 apply: cvgB => //; rewrite -cvgS.
 by apply: cvg_series_cvg_0.
 Qed.
