@@ -1,5 +1,5 @@
 (* mathcomp analysis (c) 2017 Inria and AIST. License: CeCILL-C.              *)
-Require Nsatz.
+Require Nsatz NsatzTactic.
 From mathcomp Require Import all_ssreflect ssralg ssrint ssrnum.
 From mathcomp Require Import matrix interval rat.
 Require Import boolp reals ereal.
@@ -323,7 +323,6 @@ Definition Nsatz_realType_mul (x y : T) := (x * y)%R.
 Definition Nsatz_realType_sub (x y : T) := (x - y)%R.
 Definition Nsatz_realType_opp (x  : T) := (- x)%R.
 
-Locate Ring_ops.
 #[global]
 Instance Nsatz_realType_Ring_ops:
    (@Ncring.Ring_ops T Nsatz_realType0 Nsatz_realType1
@@ -1257,18 +1256,14 @@ Proof. by rewrite sinD cosN sinN mulrN. Qed.
 
 End CosSin.
 
+Section Pi.
 
+Variable R : realType.
 
+Definition pi :=
+  if pselect (exists x : R, 0 <= x <= 2 /\ cos x = 0) is left e 
+  then (projT1 (cid e)) *+ 2 else 0.
 
-
- _  _ _ _ 1).
-
-set t := (X in X + _ = _); pattern x in t; move: @t.
-set f : R -> R := (X in X x) => /=.
-
-apply: is_deriveD.
-apply: is_derive_0_cst.
- _ (fun x => (cos x) ^ 2 + (sin x)^2)) => x1.
-
+End Pi.
   
 End CosSin.
