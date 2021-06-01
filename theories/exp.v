@@ -743,7 +743,6 @@ by near=> n; apply: ler_sum => [] [|[|i]] _;
 Grab Existential Variables. all: end_near. 
 Qed.
 
-
 Lemma exp_coeffE (x : R) : 
   exp_coeff x = (fun n => (fun n => (n`!%:R)^-1) n * x ^+ n).
 Proof. by apply/funext => i; rewrite /exp_coeff /= mulrC. Qed.
@@ -879,6 +878,67 @@ Qed.
 
 End exp.
 
+Section Ln.
+
+Variable R : realType.
+
+Notation exp := (@exp R).
+
+Definition ln x : R := xget 0 [set y | exp y == x ].
+
+Lemma lnK : cancel exp ln.
+Proof.
+by move=> x; rewrite /ln; case: xgetP => [x1 _ /eqP/expI //|/(_ x)[]/=].
+Qed.
+
+Lemma exp_total_gt1 x : 
+  1 <= x -> exists y, [/\ 0 <= y, 1 + y <= x & exp y = x].
+Proof.
+move=> x_ge1; have x_ge0 : 0 <= x by apply: le_trans x_ge1.
+case: (@IVT _ (fun y => exp y - x) 0 x 0) => //.
+- move=> x1 x1Ix; apply: continuousB => // y1.
+    by apply: continuous_exp.
+  by apply: continuous_cst.
+rewrite exp0; case: (ltrgtP (1- x) (exp x - x)) => [_||].
+- rewrite subr_le0 x_ge1 subr_ge0.
+  by apply: le_trans (exp_ge1Dx _); rewrite ?ler_addr.
+- by rewrite ltr_add2r exp_lt1 ltNge x_ge0.
+- rewrite subr_le0 x_ge1 => -> /=; rewrite subr_ge0.
+  by apply: le_trans (exp_ge1Dx x_ge0); rewrite ler_addr.
+move=> x1 _ /eqP; rewrite subr_eq0 => /eqP Hx1.
+exists x1; split => //; first by rewrite -ler_exp exp0 Hx1.
+by rewrite -Hx1 exp_ge1Dx // -ler_exp Hx1 exp0.
+Qed.
+
+Lemma exp_total x :  0 < x -> exists y, exp y = x.
+Proof.
+case: (lerP 1 x) => [/exp_total_gt1[y [_ _ Hy]]|x_lt1 x_gt0].
+  by exists y.
+have /exp_total_gt1[y [H1y H2y H3y]] : 1 <= x^-1 by rewrite ltW // !invf_cp1.
+by exists (-y); rewrite expN H3y invrK.
+Qed.
+
+Lemma expK x : 0 < x -> exp (ln x) = x.
+Proof.
+move=> x_gt0; rewrite /ln; case: xgetP=> [x1 _ /eqP// |H].
+by case: (exp_total x_gt0) => y /eqP Hy; case: (H y).
+Qed.
+
+Lemma expK_eq x : (exp (ln x) == x) = (0 < x).
+Proof.
+apply/eqP/idP=> [<-|]; last by apply: expK.
+by apply: exp_gt0.
+Qed.
+
+Lemma ln1 : ln 1 = 0.
+Proof. by apply/expI; rewrite expK // exp0. Qed.
+
+Lemma lnM x y : 0 < x -> 0 < y -> ln (x * y) = ln x + ln y.
+Proof.
+by move=> xP yP; apply: expI; rewrite ?expD !expK // mulr_gt0.
+Qed.
+
+End Ln.
 Section CosSin.
 
 Variable R : realType.
