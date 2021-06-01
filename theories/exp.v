@@ -40,10 +40,6 @@ Qed.
 Lemma cvg_zero f a : (f - cst a) @ F --> (0 : V) -> f @ F --> a.
 Proof. by move=> Cfa; apply: cvg_sub0 Cfa (cvg_cst _). Qed.
 
-Lemma cvg_equiv (f g : T -> V) (a : V) :
-  {near F, f =1 g} -> f x @[x --> F] --> a -> g x @[x --> F] --> a.
-Proof. by move=> /near_eq_cvg; exact: cvg_trans. Qed.
-
 End cvg_extra.
 
 Variable R : realType.
@@ -149,7 +145,7 @@ End continuous.
 
 Lemma chain_rule (R : realFieldType) (f g : R -> R) x :
   derivable f x 1 -> derivable g (f x) 1 ->
-  derive1 (g \o f) x = derive1 g (f x) * derive1 f x.
+  (g \o f)^`() x = g^`() (f x) * f^`() x.
 Proof.
 move=> /derivable1_diffP df /derivable1_diffP dg.
 rewrite derive1E'; last exact/differentiable_comp.
