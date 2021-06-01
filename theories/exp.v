@@ -127,26 +127,19 @@ End Cvg.
 (* About continuous *)
 
 Section continuous.
+Variables (K : numFieldType) (U V : normedModType K).
 
-Lemma continuous_withinNshiftx 
-  {K : numFieldType} {U V : normedModType K} 
-    (f : U -> V) x :
-  f \o shift x @ nbhs' 0 --> f x <-> {for x, continuous f}.
+Lemma continuous_shift (f : U -> V) u :
+  {for u, continuous f} = {for 0, continuous (f \o shift u)}.
+Proof. by rewrite [in RHS]forE /= add0r cvg_shift add0r. Qed.
+
+Lemma continuous_withinNshiftx (f : U -> V) u :
+  f \o shift u @ nbhs' 0 --> f u <-> {for u, continuous f}.
 Proof.
-split=> [cfx P /= fxP|].
-  rewrite !nbhs_nearE !near_map !near_nbhs in fxP *.
-  rewrite (@near_shift _ _ 0) subr0 /=.
-  have /= := cfx P fxP.
-  rewrite !near_simpl near_withinE near_simpl /= => Pf; near=> y.
-  have [->|] := eqVneq y 0.
-    by rewrite /= add0r; apply: nbhs_singleton.
-  by near: y.
-move=> Cf.
-apply: continuous_cvg => //.
-rewrite -[X in _ --> X]add0r.
-apply: cvgD; last by apply: cvg_cst.
-by apply: nbhs_nbhs'.
-Grab Existential Variables. all: end_near. Qed.
+rewrite continuous_shift; split=> [cfu|].
+  by apply/(continuous_withinNx _ _).2/(cvg_trans cfu); rewrite /= add0r.
+by move/(continuous_withinNx _ _).1/cvg_trans; apply; rewrite /= add0r.
+Qed.
 
 End continuous.
 
@@ -210,8 +203,8 @@ by near: y; rewrite near_withinE /= near_simpl; near=> x1.
 Grab Existential Variables. all: end_near. Qed.
 
 Global Instance is_derive1_chain (f g : R -> R) (x a b : R) :
-  is_derive (g x) 1 f a -> is_derive x 1 g b -> 
-  is_derive x  1 (f \o g) (a * b).
+  is_derive (g x) 1 f a -> is_derive x 1 g b ->
+  is_derive x 1 (f \o g) (a * b).
 Proof.
 move=> Df Dg.
 have Cg : {for x, continuous g}.
