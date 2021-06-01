@@ -728,7 +728,7 @@ Qed.
 
 Lemma exp_ge1Dx x : 0 <= x -> 1 + x <= exp x.
 Proof.
- move=> xP; rewrite /exp.
+ move=> x_gt0; rewrite /exp.
 pose f (x : R) i := (i == 0%nat)%:R + x *+ (i == 1%nat).
 have F n : (1 < n)%nat -> \sum_(0 <= i < n) (f x i) = 1 + x.
   move=> /subnK<-.
@@ -802,15 +802,16 @@ Proof. by rewrite -{1}[x]addr0 expxDyMexpx exp0. Qed.
 
 Lemma pexp_gt1 x: 0 < x -> 1 < exp x.
 Proof.
-move=> xP.
-apply: lt_le_trans (exp_ge1Dx (ltW xP)).
+move=> x_gt0.
+apply: lt_le_trans (exp_ge1Dx (ltW x_gt0)).
 by rewrite -subr_gt0 addrAC subrr add0r.
 Qed.
 
 Lemma exp_gt0 x : 0 < exp x.
 Proof.
-case: (ltrgt0P x) => [xP|xP|->]; first by apply: lt_trans (pexp_gt1 xP).
-  have F : 0 < exp (- x) by apply: lt_trans (pexp_gt1 _); rewrite ?oppr_gt0.
+case: (ltrgt0P x) => [x_gt0|x_gt0|->].
+- by apply: lt_trans (pexp_gt1 x_gt0).
+- have F : 0 < exp (- x) by apply: lt_trans (pexp_gt1 _); rewrite ?oppr_gt0.
   by rewrite -(pmulr_lgt0 _ F) expxMexpNx_1.
 by rewrite exp0.
 Qed.
@@ -836,9 +837,9 @@ Qed.
 
 Lemma exp_gt1 x:  (1 < exp x) = (0 < x).
 Proof.
-case: ltrgt0P => [xP|xN|->]; first 2 last.
+case: ltrgt0P => [x_gt0|xN|->]; first 2 last.
 - by rewrite exp0.
-- by rewrite (pexp_gt1 xP).
+- by rewrite (pexp_gt1 x_gt0).
 apply/idP/negP.
 rewrite -[x]opprK expN -leNgt invf_cp1 ?exp_gt0 //.
 by rewrite ltW // pexp_gt1 // lter_oppE.
@@ -846,7 +847,7 @@ Qed.
 
 Lemma exp_lt1 x:  (exp x < 1) = (x < 0).
 Proof.
-case: ltrgt0P => [xP|xN|->]; first 2 last.
+case: ltrgt0P => [x_gt0|xN|->]; first 2 last.
 - by rewrite exp0 //.
 - by apply/idP/negP; rewrite -leNgt ltW // exp_gt1.
 by rewrite -[x]opprK expN invf_cp1 ?exp_gt0 // exp_gt1 lter_oppE.
@@ -886,7 +887,7 @@ Notation exp := (@exp R).
 
 Definition ln x : R := xget 0 [set y | exp y == x ].
 
-Lemma lnK : cancel exp ln.
+Lemma expK : cancel exp ln.
 Proof.
 by move=> x; rewrite /ln; case: xgetP => [x1 _ /eqP/expI //|/(_ x)[]/=].
 Qed.
@@ -918,27 +919,76 @@ have /exp_total_gt1[y [H1y H2y H3y]] : 1 <= x^-1 by rewrite ltW // !invf_cp1.
 by exists (-y); rewrite expN H3y invrK.
 Qed.
 
-Lemma expK x : 0 < x -> exp (ln x) = x.
+Lemma lnK x : 0 < x -> exp (ln x) = x.
 Proof.
 move=> x_gt0; rewrite /ln; case: xgetP=> [x1 _ /eqP// |H].
 by case: (exp_total x_gt0) => y /eqP Hy; case: (H y).
 Qed.
 
-Lemma expK_eq x : (exp (ln x) == x) = (0 < x).
+Lemma lnK_eq x : (exp (ln x) == x) = (0 < x).
 Proof.
-apply/eqP/idP=> [<-|]; last by apply: expK.
+apply/eqP/idP=> [<-|]; last by apply: lnK.
 by apply: exp_gt0.
 Qed.
 
 Lemma ln1 : ln 1 = 0.
-Proof. by apply/expI; rewrite expK // exp0. Qed.
+Proof. by apply/expI; rewrite lnK // exp0. Qed.
 
 Lemma lnM x y : 0 < x -> 0 < y -> ln (x * y) = ln x + ln y.
 Proof.
-by move=> xP yP; apply: expI; rewrite ?expD !expK // mulr_gt0.
+by move=> x_gt0 y_gt0; apply: expI; rewrite ?expD !lnK // mulr_gt0.
+Qed.
+
+Lemma lnI x y : 0 < x -> 0 < y -> ln x = ln y -> x = y.
+Proof. by move=> /lnK {2}<- /lnK {2}<- ->. Qed.
+
+Lemma lnV x : 0 < x -> ln (x^-1) = - ln x.
+Proof.
+move=> x_gt0; have xVP : 0 < x^-1 by rewrite invr_gt0.
+by apply: expI; rewrite lnK // expN lnK.
+Qed.
+
+Lemma ln_div x y : 0 < x -> 0 < y -> ln (x / y) = ln x - ln y.
+Proof. by move=> x_gt0 y_gt0; rewrite lnM  ?invr_gt0 // lnV. Qed.
+
+Lemma ltr_ln : {in Num.pos &, {mono ln : x y / x < y}}.
+Proof. by move=> x y x_gt0 y_gt0; rewrite -ltr_exp !lnK. Qed.
+
+Lemma ler_ln : {in Num.pos &, {mono ln : x y / x <= y}}.
+Proof. by move=> x y x_gt0 y_gt0; rewrite -ler_exp !lnK. Qed.
+
+Lemma lnX n x : 0 < x -> ln(x ^+ n) = ln x *+ n.
+Proof.
+move=> x_gt0; elim: n => [|n IH] /=; first by rewrite expr0 ln1 mulr0n.
+by rewrite !exprS lnM ?exprn_gt0 // -add1n mulrnDr mulr1n IH.
+Qed.
+
+Lemma ln_le1Dx x : 0 <= x -> ln (1 + x) <= x.
+Proof.
+move=> x_ge0; rewrite -ler_exp lnK ?exp_ge1Dx //.
+by apply: lt_le_trans (_ : 0 < 1) _; rewrite // ler_addl.
+Qed.
+Search (_ < exp.exp _).
+
+Lemma ln_sublinear x : 0 < x -> ln x < x.
+Proof.
+move=> x_gt0; apply: lt_le_trans (_ : ln (1 + x) <= _).
+  by rewrite -ltr_exp !lnK ?addr_gt0 // ltr_addr.
+by rewrite -ler_exp lnK ?addr_gt0 // exp_ge1Dx // ltW.
+Qed.
+
+Lemma ln_ge0 x : 1 <= x -> 0 <= ln x.
+Proof.
+by move=> x_ge1; rewrite -ler_exp exp0 lnK // (lt_le_trans _ x_ge1).
+Qed.
+
+Lemma ln_gt0 x : 1 < x -> 0 < ln x.
+Proof.
+by move=> x_gt1; rewrite -ltr_exp exp0 lnK // (lt_trans _ x_gt1).
 Qed.
 
 End Ln.
+
 Section CosSin.
 
 Variable R : realType.
