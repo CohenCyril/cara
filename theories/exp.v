@@ -1128,6 +1128,16 @@ apply: (@termdiff _ _ (`|x| + 1)).
 by rewrite ger0_norm ?addr_ge0 // addrC -subr_gt0 addrK.
 Qed.
 
+Lemma derivable_sin x : derivable sin x 1.
+Proof. by apply: ex_derive; apply: is_derive_sin. Qed.
+
+Lemma continuous_sin : continuous sin.
+Proof.
+move=> x.
+apply: differentiable_continuous.
+by apply/derivable1_diffP/derivable_sin.
+Qed.
+
 Global Instance is_derive_cos x : is_derive x 1 cos (- (sin x)).
 Proof.
 rewrite cosE /=.
@@ -1161,6 +1171,16 @@ apply: (@termdiff _ _ (`|x| + 1)).
 by rewrite ger0_norm ?addr_ge0 // addrC -subr_gt0 addrK.
 Qed.
 
+Lemma derivable_cos x : derivable cos x 1.
+Proof. by apply: ex_derive; apply: is_derive_cos. Qed.
+
+Lemma continuous_cos : continuous cos.
+Proof.
+move=> x.
+apply: differentiable_continuous.
+by apply/derivable1_diffP/derivable_cos.
+Qed.
+
 Lemma cos2Dsin2 a : (cos a) ^+ 2 + (sin a) ^+ 2 = 1.
 Proof.
 pose f := cos ^+2 + sin^+2; rewrite -[LHS]/(f a).
@@ -1170,6 +1190,30 @@ apply: is_derive_0_cst => {}x.
 apply: trigger_derive; rewrite /GRing.scale /=.
 by rewrite ?expr1 mulrN mulrAC addrC subrr.
 Qed.
+
+Lemma cos_max a : `| cos a | <= 1.
+Proof.
+rewrite -(expr_le1 (_ : 0 < 2)%nat) // -normrX ger0_norm ?exprn_even_ge0 //.
+by rewrite -(cos2Dsin2 a) ler_addl ?sqr_ge0.
+Qed.
+
+Lemma cos_geN1 a : -1 <= cos a.
+Proof. by rewrite ler_oppl; have /ler_normlP[] := cos_max a. Qed.
+
+Lemma cos_le1 a : cos a <= 1.
+Proof. by have /ler_normlP[] := cos_max a. Qed.
+
+Lemma sin_max a : `| sin a | <= 1.
+Proof.
+rewrite -(expr_le1 (_ : 0 < 2)%nat) // -normrX ger0_norm ?exprn_even_ge0 //.
+by rewrite -(cos2Dsin2 a) ler_addr ?sqr_ge0.
+Qed.
+
+Lemma sin_geN1 a : -1 <= sin a.
+Proof. by rewrite ler_oppl; have /ler_normlP[] := sin_max a. Qed.
+
+Lemma sin_le1 a : sin a <= 1.
+Proof. by have /ler_normlP[] := sin_max a. Qed.
 
 Fact sinD_aux x y :
   (sin (x + y) - (sin x * cos y + cos x * sin y)) ^+ 2 +
@@ -1242,6 +1286,30 @@ Proof. by rewrite cosD cosN sinN mulrN opprK. Qed.
 
 Lemma sinB a b : sin (a - b) = sin a * cos b - cos a * sin b.
 Proof. by rewrite sinD cosN sinN mulrN. Qed.
+
+Lemma norm_cos_eq1 a : (`|cos a| == 1) = (sin a == 0).
+Proof.
+rewrite -sqrf_eq0 -sqrp_eq1 // -normrX ger0_norm ?exprn_even_ge0 //.
+by rewrite [X in _ = (X == _)]sin2cos2 subr_eq0 eq_sym.
+Qed.
+
+Lemma norm_sin_eq1 a : (`|sin a| == 1) = (cos a == 0).
+Proof.
+rewrite -sqrf_eq0 -sqrp_eq1 // -normrX ger0_norm ?exprn_even_ge0 //.
+by rewrite [X in _ = (X == _)]cos2sin2 subr_eq0 eq_sym.
+Qed.
+
+Lemma cos1sin0 a : `|cos a| = 1 -> sin a = 0.
+Proof. by move/eqP; rewrite norm_cos_eq1 => /eqP. Qed.
+
+Lemma sin1cos0 a : `|sin a| = 1 -> cos a = 0.
+Proof. by move/eqP; rewrite norm_sin_eq1 => /eqP. Qed.
+
+Lemma sin0cos1 a : sin a = 0 -> `|cos a| = 1.
+Proof. by move/eqP; rewrite -norm_cos_eq1 => /eqP. Qed.
+
+Lemma cos_norm a : cos `|a| = cos a.
+Proof. by case: (ler0P a); rewrite ?cosN. Qed.
 
 End CosSin.
 
