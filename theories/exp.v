@@ -743,13 +743,6 @@ by near=> n; apply: ler_sum => [] [|[|i]] _;
 Grab Existential Variables. all: end_near. 
 Qed.
 
-Lemma exp_gt1 x : 0 < x  -> 1 < exp x.
-Proof.
-move=> xP.
-apply: lt_le_trans (exp_ge1Dx (ltW xP)).
-by rewrite -subr_gt0 addrAC subrr add0r.
-Qed.
-
 
 Lemma exp_coeffE (x : R) : 
   exp_coeff x = (fun n => (fun n => (n`!%:R)^-1) n * x ^+ n).
@@ -808,15 +801,22 @@ Qed.
 Lemma expxMexpNx_1 x : exp x * exp (-x) = 1.
 Proof. by rewrite -{1}[x]addr0 expxDyMexpx exp0. Qed.
 
+Lemma pexp_gt1 x: 0 < x -> 1 < exp x.
+Proof.
+move=> xP.
+apply: lt_le_trans (exp_ge1Dx (ltW xP)).
+by rewrite -subr_gt0 addrAC subrr add0r.
+Qed.
+
 Lemma exp_gt0 x : 0 < exp x.
 Proof.
-case: (ltrgt0P x) => [xP|xP|->]; first by apply: lt_trans (exp_gt1 xP).
-  have F : 0 < exp (- x) by apply: lt_trans (exp_gt1 _); rewrite ?oppr_gt0.
+case: (ltrgt0P x) => [xP|xP|->]; first by apply: lt_trans (pexp_gt1 xP).
+  have F : 0 < exp (- x) by apply: lt_trans (pexp_gt1 _); rewrite ?oppr_gt0.
   by rewrite -(pmulr_lgt0 _ F) expxMexpNx_1.
 by rewrite exp0.
 Qed.
 
-Lemma expV x : exp (-x) = (exp x)^-1.
+Lemma expN x : exp (-x) = (exp x)^-1.
 Proof.
 apply: (mulfI (lt0r_neq0 (exp_gt0 x))).
 by rewrite expxMexpNx_1 mulfV // (lt0r_neq0 (exp_gt0 x)).
@@ -825,8 +825,56 @@ Qed.
 Lemma expD x y : exp (x + y) = exp x * exp y.
 Proof.
 apply: (mulIf (lt0r_neq0 (exp_gt0 (- x)))).
-rewrite expxDyMexpx expV [_ * exp y]mulrC mulfK //.
+rewrite expxDyMexpx expN [_ * exp y]mulrC mulfK //.
 by case: ltrgt0P (exp_gt0 x).
+Qed.
+
+Lemma expMm n x : exp (n%:R * x) = exp x ^+ n.
+Proof.
+elim: n x => [x|n IH x] /=; first by rewrite mul0r expr0 exp0.
+by rewrite exprS -add1n natrD mulrDl mul1r expD IH.
+Qed.
+
+Lemma exp_gt1 x:  (1 < exp x) = (0 < x).
+Proof.
+case: ltrgt0P => [xP|xN|->]; first 2 last.
+- by rewrite exp0.
+- by rewrite (pexp_gt1 xP).
+apply/idP/negP.
+rewrite -[x]opprK expN -leNgt invf_cp1 ?exp_gt0 //.
+by rewrite ltW // pexp_gt1 // lter_oppE.
+Qed.
+
+Lemma exp_lt1 x:  (exp x < 1) = (x < 0).
+Proof.
+case: ltrgt0P => [xP|xN|->]; first 2 last.
+- by rewrite exp0 //.
+- by apply/idP/negP; rewrite -leNgt ltW // exp_gt1.
+by rewrite -[x]opprK expN invf_cp1 ?exp_gt0 // exp_gt1 lter_oppE.
+Qed.
+
+Lemma expB x y : exp (x - y) = exp x / exp y.
+Proof. by rewrite expD expN. Qed.
+
+Lemma ltr_exp : {mono exp : x y / x < y}.
+Proof.
+move=> x y.
+by rewrite -{1}(subrK x y) expD ltr_pmull ?exp_gt0 // exp_gt1 subr_gt0.
+Qed.
+
+Lemma ler_exp : {mono exp : x y / x <= y}.
+Proof.
+move=> x y.
+case: (ltrgtP x y) => [xLy|yLx|<-].
+- by rewrite ltW // ltr_exp.
+- by rewrite leNgt ltr_exp yLx.
+by rewrite lexx.
+Qed.
+
+Lemma expI : injective exp.
+Proof.
+move=> x y exE.
+by have [] := (ltr_exp x y, ltr_exp y x); rewrite exE ltxx; case: ltrgtP.
 Qed.
 
 End exp.
