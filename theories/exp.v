@@ -48,7 +48,7 @@ End cvg_extra.
 
 Variable R : realType.
 
-Lemma cvg_series_bounded (f : R^nat) :
+Lemma cvg_series_bounded (f : R ^nat) :
   cvg (series f) -> exists2 K, 0 < K & (forall i, `|f i| < K).
 Proof.
 move=> /cvg_series_cvg_0/cvgP/cvg_seq_bounded[r [_ /(_ (r + 1)) fr]].
@@ -57,11 +57,11 @@ by rewrite (le_lt_trans (fr _ _ _)) ?ltr_spaddr// lt_maxr ltr_add2l ltr1n orbT.
 Qed.
 
 (* NB: useful? *)
-Lemma eq_cvg_lim : forall (R : realType) (f g : (R) ^nat),
+Lemma eq_cvg_lim : forall (R : realType) (f g : R ^nat),
   f = g -> (f --> lim f) = (g --> lim g).
 Proof. by move=> R1 f1 g1 ->. Qed.
 
-Lemma eq_cvgl (f g : R^nat) (x : R) : f = g -> (f --> x) = (g --> x).
+Lemma eq_cvgl (f g : R ^nat) (x : R) : f = g -> (f --> x) = (g --> x).
 Proof. by move->. Qed.
 
 Lemma seriesN (f : R ^nat) : series (- f) = - series f.
@@ -81,7 +81,7 @@ Lemma lim_seriesN (f : R ^nat) : cvg (series f) ->
 Proof. by move=> cf; rewrite seriesN limN. Qed.
 
 Lemma is_cvg_seriesZr (f : R ^nat) k : cvg (series f) -> cvg (series (k *: f)).
-Proof. by move=> c; rewrite seriesZr; exact: is_cvgZr. Qed.
+Proof. by move=> cf; rewrite seriesZr; exact: is_cvgZr. Qed.
 
 Lemma lim_seriesZr (f : R ^nat) k : cvg (series f) ->
   lim (series (k *: f)) = k *: lim (series f).
@@ -153,13 +153,11 @@ Variable R : realType.
 
 Global Instance is_derive1_id (x : R) : is_derive x 1 id 1.
 Proof.
-have Did := (@linear_differentiable _ _ _ [linear of idfun]).
-constructor; first by apply/derivable1_diffP.
-rewrite deriveE //.
-by have /= -> := (@diff_lin _ _ _ [linear of idfun] x).
+constructor; first exact/derivable1_diffP.
+by rewrite deriveE // (@diff_lin _ _ _ [linear of idfun]).
 Qed.
 
-Lemma is_derive_0_cst (f : R -> R) x y : 
+Lemma is_derive_0_cst (f : R -> R) x y :
   (forall x, is_derive x 1 f 0) -> f x = f y.
 Proof.
 move=> Hd.
@@ -1135,8 +1133,6 @@ Section Pi.
 
 Variable R : realType.
 
-Definition pi :=
-  if pselect (exists x : R, 0 <= x <= 2 /\ cos x = 0) is left e 
-  then (projT1 (cid e)) *+ 2 else 0.
+Definition pi : R := get [set x | 0 <= x <= 2 /\ cos x = 0] *+ 2.
 
 End Pi.
