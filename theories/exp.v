@@ -1,4 +1,5 @@
 (* mathcomp analysis (c) 2017 Inria and AIST. License: CeCILL-C.              *)
+Require Nsatz.
 From mathcomp Require Import all_ssreflect ssralg ssrint ssrnum.
 From mathcomp Require Import matrix interval rat.
 Require Import boolp reals ereal.
@@ -10,7 +11,6 @@ Require Import derive.
 (*                                                                            *)
 (*                                                                            *)
 (******************************************************************************)
-
 Set Implicit Arguments.
 Unset Strict Implicit.
 Unset Printing Implicit Defensive.
@@ -293,6 +293,86 @@ by rewrite (negPf F) fE gE -mulrA mulfK // subr_eq0.
 Grab Existential Variables. all: end_near. Qed.
 
 End is_derive.
+(******************************************************************************)
+(* Unfold function application (f + f) 0 gives f 0 + f 0                      *)
+(******************************************************************************)
+
+Ltac rcfE := 
+repeat  rewrite /(@GRing.mul (fct_ringType _ _)) /=
+          /(@GRing.exp (fct_ringType _ _)) /=
+          /(@GRing.add (fct_ringType _ _)) /=
+          /(@GRing.add (fct_zmodType _ _)) /=
+          /(@GRing.scale _ (fct_lmodType _ _)) /=
+          /(@GRing.opp (fct_ringType _ _)) /=
+          /(@GRing.opp (fct_zmodType _ _)) /=.
+
+(******************************************************************************)
+(* Just to have ring for realType                                             *)
+(******************************************************************************)
+
+Section Nsatz_realType.
+Variable T : realType.
+
+Lemma Nsatz_realType_Setoid_Theory : Setoid.Setoid_Theory T (@eq T).
+Proof. by constructor => [x //|x y //|x y z ->]. Qed.
+
+Definition Nsatz_realType0 := (0%:R : T).
+Definition Nsatz_realType1 := (1%:R : T).
+Definition Nsatz_realType_add (x y : T) := (x + y)%R.
+Definition Nsatz_realType_mul (x y : T) := (x * y)%R.
+Definition Nsatz_realType_sub (x y : T) := (x - y)%R.
+Definition Nsatz_realType_opp (x  : T) := (- x)%R.
+
+Locate Ring_ops.
+#[global]
+Instance Nsatz_realType_Ring_ops:
+   (@Ncring.Ring_ops T Nsatz_realType0 Nsatz_realType1
+  Nsatz_realType_add
+  Nsatz_realType_mul
+  Nsatz_realType_sub
+  Nsatz_realType_opp (@eq T)).
+Defined.
+
+#[global]
+Instance Nsatz_realType_Ring : (Ncring.Ring (Ro:=Nsatz_realType_Ring_ops)).
+Proof.
+constructor => //.
+- exact: Nsatz_realType_Setoid_Theory.
+- by move=> x y -> x1 y1 ->.
+- by move=> x y -> x1 y1 ->.
+- by move=> x y -> x1 y1 ->.
+- by move=> x y ->.
+- exact: add0r.
+- exact: addrC.
+- exact: addrA.
+- exact: mul1r.
+- exact: mulr1.
+- exact: mulrA.
+- exact: mulrDl.
+- move=> x y z; exact: mulrDr.
+- exact: subrr.
+Defined.
+
+#[global]
+Instance Nsatz_realType_Cring: (Cring.Cring (Rr:=Nsatz_realType_Ring)).
+Proof. exact: mulrC. Defined.
+
+Locate Integral_domain.
+#[global]
+Instance Nsatz_realType_Integral_domain :
+   (Integral_domain.Integral_domain (Rcr:=Nsatz_realType_Cring)).
+Proof.
+constructor.
+  move=> x y.
+  rewrite -[_ _ Algebra_syntax.zero]/(x * y = 0)%R => /eqP.
+  by rewrite mulf_eq0 => /orP[] /eqP->; [left | right].
+rewrite -[_ _ Algebra_syntax.zero]/(1 = 0)%R; apply/eqP.
+by rewrite (eqr_nat T 1 0).
+Defined.
+
+End Nsatz_realType.
+
+Tactic Notation "nsatz" := NsatzTactic.nsatz_default.
 
 (******************************************************************************)
 (* Differentiability of series inspired by HOL-Light transc.ml                *)
@@ -569,7 +649,7 @@ suff Cc :
     by apply: cvgB.
   set w := fun n : nat => _.
   have -> : w = h^-1 *: (shx h - sx)  - s1.
-    apply: funext => i /=; rewrite /-%R  /+%R /*:%R /=.
+    apply: funext => i /=; rcfE.
     rewrite /w /shx /sx /s1 /= mulrBr; congr (_ - _); last first.
       by rewrite mulrCA !mulrA.
     by rewrite -mulrBr [RHS]mulrCA [_^-1 * _]mulrC.
@@ -928,7 +1008,7 @@ case: odd; first by rewrite mul1r.
 by rewrite !mul0r divr_ge0 ?exprn_ge0 // ler0n.
 Qed.
 
-Definition sin x := lim (series (sin_coeff x)).
+Definition sin (x : R) : R := lim (series (sin_coeff x)).
 
 Lemma sinE : 
   sin = fun x => 
@@ -984,7 +1064,7 @@ case: odd; last by rewrite mul1r.
 by rewrite !mul0r divr_ge0 ?exprn_ge0 // ler0n.
 Qed.
 
-Definition cos x := lim (series (cos_coeff x)).
+Definition cos (x : R) : R := lim (series (cos_coeff x)).
 
 Lemma cosE : 
   cos = fun x => 
@@ -1085,4 +1165,110 @@ apply: (@is_deriveX _ _ cos 1).
 apply: (@is_deriveX _ _ sin 1).
 Qed.
 
+Fact sinD_aux x y :
+  (sin (x + y) - (sin x * cos y + cos x * sin y)) ^+ 2 +
+  (cos (x + y) - (cos x * cos y - sin x * sin y)) ^+ 2 = 0.
+Proof.
+pose f := (sin \o +%R^~ y - (sin * cst (cos y) + cos * cst (sin y)))^+2 +
+          (cos \o +%R^~ y - (cos * cst (cos y) - sin * cst (sin y)))^+2.
+apply: etrans (_ : f x = 0); first by [].
+apply: etrans (_ : f 0 = 0); last first.
+  rewrite /f /cst; rcfE.
+  by rewrite cos0 sin0 !(mul1r, mul0r, add0r, subr0, subrr).
+apply: is_derive_0_cst => {}x.
+have F x1 y1 : x1 = y1 -> is_derive x 1 f x1 -> is_derive x 1 f y1.
+  by move->.
+eapply F; last first.
+do 7 (apply is_deriveB || apply is_deriveD || apply is_deriveX ||
+      apply is_deriveM || apply is_derive1_chain || apply is_derive1_id || 
+      apply is_derive_sin || apply is_derive_cos || apply is_derive_cst).
+rewrite /cst; rcfE.
+rewrite !(scaler0, add0r, addr0, mulr1, expr1) mulr2n.
+nsatz.
+Qed.
+
+Lemma sinD x y : sin (x + y) = sin x * cos y + cos x * sin y.
+Proof.
+have /eqP := sinD_aux x y.
+rewrite paddr_eq0 => [/andP[]||]; try by apply: sqr_ge0.
+by rewrite sqrf_eq0 subr_eq0 => /eqP.
+Qed.
+
+Lemma cosD x y : cos (x + y) = cos x * cos y - sin x * sin y.
+Proof.
+have /eqP := sinD_aux x y.
+rewrite paddr_eq0 => [/andP[_]||]; try by apply: sqr_ge0.
+by rewrite sqrf_eq0 subr_eq0 => /eqP.
+Qed.
+
+Lemma sin2cos2 a : sin a ^+ 2 = 1 - cos a ^+ 2.
+Proof. move/eqP: (cos2Dsin2 a); by rewrite eq_sym addrC -subr_eq => /eqP. Qed.
+
+Lemma cos2sin2 a : cos a ^+ 2 = 1 - sin a ^+ 2.
+Proof. move/eqP: (cos2Dsin2 a); by rewrite eq_sym -subr_eq => /eqP. Qed.
+
+Lemma sin_mulr2n a : sin (a *+ 2) = (cos a * sin a) *+ 2.
+Proof. by rewrite mulr2n sinD mulrC -mulr2n. Qed.
+
+Lemma sinN_aux x :
+    (sin (- x ) + (sin x)) ^+ 2 + (cos (- x) - (cos x)) ^+ 2 = 0.
+Proof.
+pose f := (sin \o -%R + sin)^+2 + (cos \o -%R - cos )^+2.
+apply: etrans (_ : f x = 0); first by [].
+apply: etrans (_ : f 0 = 0); last first.
+  rewrite /f /cst; rcfE.
+  by rewrite oppr0 cos0 sin0 !(mul1r, mul0r, add0r, subr0, subrr).
+apply: is_derive_0_cst => {}x.
+have F x1 y1 : x1 = y1 -> is_derive x 1 f x1 -> is_derive x 1 f y1.
+  by move->.
+eapply F; last first.
+do 8 (apply is_deriveB || apply is_deriveD || apply is_deriveX ||
+      apply is_deriveM || apply is_derive1_chain || apply is_derive1_id || 
+      apply is_derive_sin || apply is_derive_cos || apply is_derive_cst ||
+      apply is_deriveN).
+- by apply: is_deriveN; apply: is_derive1_id.
+- by apply: is_derive1_id.
+- by apply: is_deriveN; apply: is_derive1_id.
+- by apply: is_derive1_id.
+rewrite /cst; rcfE.
+rewrite !(scaler0, add0r, addr0, mulr1, expr1) mulr2n.
+nsatz.
+Qed.
+
+Lemma sinN a : sin (- a) = - sin a.
+Proof.
+have /eqP := sinN_aux a.
+rewrite paddr_eq0 => [/andP[]||]; try by apply: sqr_ge0.
+by rewrite sqrf_eq0 addr_eq0 => /eqP.
+Qed.
+
+Lemma cosN a : cos (- a) = cos a.
+Proof.
+have /eqP := sinN_aux a.
+rewrite paddr_eq0 => [/andP[_]||]; try by apply: sqr_ge0.
+by rewrite sqrf_eq0 subr_eq0 => /eqP.
+Qed.
+
+Lemma cosB a b : cos (a - b) = cos a * cos b + sin a * sin b.
+Proof. by rewrite cosD cosN sinN mulrN opprK. Qed.
+
+Lemma sinB a b : sin (a - b) = sin a * cos b - cos a * sin b.
+Proof. by rewrite sinD cosN sinN mulrN. Qed.
+
+End CosSin.
+
+
+
+
+
+ _  _ _ _ 1).
+
+set t := (X in X + _ = _); pattern x in t; move: @t.
+set f : R -> R := (X in X x) => /=.
+
+apply: is_deriveD.
+apply: is_derive_0_cst.
+ _ (fun x => (cos x) ^ 2 + (sin x)^2)) => x1.
+
+  
 End CosSin.
