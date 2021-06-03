@@ -559,6 +559,7 @@ End TermDiff.
 (*  Exponentiel series                                                        *)
 (******************************************************************************)
 
+(* TODO: rebase: this section is not in master/sequences.v *)
 Section fact_facts.
 
 Local Open Scope nat_scope.
@@ -584,6 +585,7 @@ Qed.
 
 End fact_facts.
 
+(* TODO: rebase: this section is not in master/sequences.v *)
 Section exponential_series.
 
 Variable R : realType.
@@ -710,11 +712,11 @@ End exponential_series.
 (*   Starting with the exponentiel function                                   *)
 (******************************************************************************)
 
-
 Section exp.
 
 Variable R : realType.
 
+(* TODO: rebase: exp is not in master and called expR *)
 Definition exp (x : R) : R := lim (series (exp_coeff x)).
 
 Lemma exp0 : exp 0 = 1.
@@ -723,8 +725,7 @@ apply: lim_near_cst => //.
 near=> m; rewrite -[m]prednK; last by near: m.
 rewrite -addn1 series_addn series_exp_coeff0 big_add1 big1 ?addr0//.
 by move=> i _; rewrite /exp_coeff /= expr0n mul0r.
-Grab Existential Variables. all: end_near. 
-Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 Lemma exp_ge1Dx x : 0 <= x -> 1 + x <= exp x.
 Proof.
@@ -740,18 +741,17 @@ apply: ler_lim; first by apply: is_cvg_near_cst; near=> n; apply: F; near: n.
 by near=> n; apply: ler_sum => [] [|[|i]] _;
   rewrite /f /exp_coeff /= !(mulr0n, mulr1n, expr0, expr1, divr1, addr0, add0r)
           // exp_coeff_ge0.
-Grab Existential Variables. all: end_near. 
-Qed.
+Grab Existential Variables. all: end_near. Qed.
 
-Lemma exp_coeffE (x : R) : 
+Lemma exp_coeffE (x : R) :
   exp_coeff x = (fun n => (fun n => (n`!%:R)^-1) n * x ^+ n).
 Proof. by apply/funext => i; rewrite /exp_coeff /= mulrC. Qed.
 
-Lemma expE : 
+Lemma expE :
   exp = fun x => lim (series (fun n => (fun n => (n`!%:R)^-1) n * x ^+ n)).
 Proof. by apply/funext => x; rewrite -exp_coeffE. Qed.
 
-Lemma diffs_exp : 
+Lemma diffs_exp :
   diffs (fun n => (n`!%:R)^-1) = (fun n => (n`!%:R)^-1 : R).
 Proof.
 by apply/funext => i; rewrite /diffs factS natrM invfM mulrA mulfV ?mul1r.
@@ -789,7 +789,7 @@ Proof.
 apply: etrans (_ : exp(0 + y) * exp (- 0) = _); last first.
   by rewrite add0r oppr0 exp0 mulr1.
 apply: (@is_derive_0_cst _ (fun x => exp (x + y) * exp (- x))) => x1.
-have -> : 0 = exp (x1 + y) * (exp (-x1) * (- 1)) + 
+have -> : 0 = exp (x1 + y) * (exp (-x1) * (- 1)) +
               exp (- x1) * (exp (x1 + y) * (1 + 0)).
   by rewrite mulrN1 addr0 mulr1 mulrN addrC mulrC subrr.
 apply: is_deriveM.
@@ -892,7 +892,7 @@ Proof.
 by move=> x; rewrite /ln; case: xgetP => [x1 _ /eqP/expI //|/(_ x)[]/=].
 Qed.
 
-Lemma exp_total_gt1 x : 
+Lemma exp_total_gt1 x :
   1 <= x -> exists y, [/\ 0 <= y, 1 + y <= x & exp y = x].
 Proof.
 move=> x_ge1; have x_ge0 : 0 <= x by apply: le_trans x_ge1.
@@ -1356,8 +1356,7 @@ Grab Existential Variables. all: end_near. Qed.
 Lemma SER_PAIR (f : R ^nat) : cvg (series f) ->
  series (fun n => \sum_(n.*2 <= i < n.*2 + 2) f i) --> lim (series f).
 Proof.
-move=> cf.
-rewrite [X in series X --> _](_ : _ =
+move=> cf; rewrite [X in series X --> _](_ : _ =
     (fun n => \sum_(n * 2 <= k < n.+1 * 2) f k)); last first.
   by rewrite funeqE => n; rewrite /= addnC -(muln2 n) -mulSn.
 exact: SER_GROUP.
@@ -1386,8 +1385,23 @@ Lemma SER_POS_LT_PAIR (f : R ^nat) n : cvg (series f) ->
   (forall d, 0 < f (n + d.*2)%N + f (n + d.*2.+1)%N) ->
   \sum_(0 <= i < n) f i < lim (series f).
 Proof.
-move=> cf.
-Admitted.
+move=> /cvg_ballP cf fn.
+have fn0 : 0 < f n + f n.+1 by have := fn 0%N; rewrite double0 addn0 addn1.
+rewrite ltNge; apply: contraPN cf => ffn /(_ _ fn0).
+rewrite near_map /ball /=.
+have nf_ub N : \sum_(0 <= i < n.+2) f i <= \sum_(0 <= i < N.+1.*2 + n) f i.
+  elim: N => // N /le_trans ->//; rewrite -(addn1 (N.+1)) doubleD addnAC.
+  rewrite [in X in _ <= X]/index_iota subn0 iota_add big_cat.
+  rewrite -[in X in _ <= X + _](subn0 (N.+1.*2 + n)%N) ler_addl /= add0n.
+  by rewrite 2!big_cons big_nil addr0 -(addnC n) ltW// -addnS fn.
+case=> N _ Nfn; have /Nfn/ltr_distlC_addr : (N.+1.*2 + n >= N)%N.
+  by rewrite doubleS -addn2 -addnn -2!addnA leq_addr.
+rewrite addrA => ffnfn.
+have : lim (series f) + f n + f n.+1 <= \sum_(0 <= i < N.+1.*2 + n) f i.
+  apply: (le_trans _ (nf_ub N)).
+  by do 2 rewrite big_nat_recr //=; by rewrite -2!addrA ler_add2r.
+by move/(lt_le_trans ffnfn); rewrite ltxx.
+Qed.
 
 Lemma cos2_lt0 : cos 2 < 0 :> R.
 Proof.
@@ -1398,8 +1412,20 @@ apply: (@lt_trans _ _ (\sum_(0 <= i < 3) - cos_coeff' 2 i)).
   rewrite cos_coeff_2_0 cos_coeff_2_2 -muln2 cos_coeff_2_4 addrA -(opprD 1).
   rewrite opprB -(@natrB _ 2 1)// subn1/= -{1}(@divff _ 3%:R)// -mulrBl.
   by rewrite divr_gt0// -natrB.
-rewrite -seriesN SER_POS_LT_PAIR //; first by move/cvgP in H; by rewrite seriesN.
+rewrite -seriesN SER_POS_LT_PAIR //.
+  by move/cvgP in H; by rewrite seriesN.
 move=> d.
-Abort.
+rewrite /cos_coeff' 2!exprzD_nat (exprSz _ d.*2) -[in (-1) ^ d.*2](muln2 d).
+rewrite -(exprnP _ (d * 2)) (exprM (-1)) sqrr_sign 2!mulr1 -exprSzr.
+rewrite (_ : 4 = 2 * 2)%N // -(exprnP _ (2 * 2)) (exprM (-1)) sqrr_sign.
+rewrite mul1r [(-1) ^ 3](_ : _ = -1) ?mulN1r ?mulNr ?opprK; last first.
+  by rewrite -exprnP 2!exprS expr1 mulrN1 opprK mulr1.
+rewrite subr_gt0.
+rewrite addnS doubleS -[X in 2 ^+ X]addn2 exprD -mulrA ltr_pmul2l ?exprn_gt0//.
+rewrite factS factS 2!natrM mulrA invfM !mulrA.
+rewrite ltr_pdivr_mulr ?ltr0n ?fact_gt0// mulVf ?pnatr_eq0 ?gtn_eqF ?fact_gt0//.
+rewrite ltr_pdivr_mulr ?mul1r //.
+by rewrite expr2 -!natrM ltr_nat !mulSn !add2n mul0n !addnS.
+Qed.
 
 End Pi.
