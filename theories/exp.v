@@ -1202,6 +1202,9 @@ Implicit Types (x : R) (n k : nat).
 
 Definition pi : R := get [set x | 0 <= x <= 2 /\ cos x = 0] *+ 2.
 
+Lemma pihalfE : pi / 2 = get [set x | 0 <= x <= 2 /\ cos x = 0].
+Proof. by rewrite /pi -(mulr_natr (get _)) -mulrA divff ?mulr1. Qed.
+
 (* TODO: move closer to cos? *)
 Lemma cos_coeff_odd n x : cos_coeff x n.*2.+1 = 0.
 Proof. by rewrite /cos_coeff /= odd_double /= !mul0r. Qed.
@@ -1325,7 +1328,6 @@ apply: lt_le_trans (_ : 2%:R <= _) => //.
 by rewrite ler_nat.
 Qed.
 
-(* NB(rei): name ok? *)
 Lemma coshpi_uniq (x y : R) :
   0 <= x <= 2 -> cos x = 0 -> 0 <= y <= 2 -> cos y = 0 -> x = y.
 Proof.
@@ -1345,6 +1347,39 @@ apply/sin2_gt0/andP; split => //.
   by rewrite (itvP x1I).
 apply: lt_le_trans _ y_le2.
 by rewrite (itvP x1I).
+Qed.
+
+Local Lemma cos_pihalf' : 0 <= pi / 2 <= 2 /\ cos (pi / 2) = 0.
+Proof.
+have [x ? ?] := cos_exists; rewrite pihalfE.
+by case: xgetP => [_->[]//|/(_ x)/=]; last tauto.
+Qed.
+
+Lemma cos_pihalf : cos (pi / 2) = 0. Proof. exact: cos_pihalf'.2. Qed.
+
+Lemma pihalf_02 : 0 < pi / 2 < 2.
+Proof.
+have [pih02 cpih] := cos_pihalf'.
+rewrite 2!lt_neqAle andbCA -andbA pih02 andbT; apply/andP; split.
+  by apply/eqP => pih2; have := cos2_lt0; rewrite -pih2 cpih ltxx.
+apply/eqP => pih0; have := @cos0 R.
+by rewrite pih0 cpih; apply/eqP; rewrite eq_sym oner_eq0.
+Qed.
+
+Lemma sin_pihalf : sin (pi / 2) = 1.
+Proof.
+have := cos2Dsin2 (pi / 2); rewrite cos_pihalf expr0n add0r.
+rewrite -[in X in _ = X -> _](expr1n _ 2%N) => /eqP; rewrite -subr_eq0 subr_sqr.
+rewrite mulf_eq0=> /orP[|]; first by rewrite subr_eq0=> /eqP.
+move/eqP/absurd; apply; apply/eqP; rewrite addr_eq0 -eqr_oppLR.
+apply/eqP => Nspi21.
+have := @ler01 R; rewrite -{}Nspi21 ler_oppr oppr0 leNgt => /negP; apply.
+exact/sin2_gt0/pihalf_02.
+Qed.
+
+Lemma cos_pi : cos pi = - 1.
+Proof.
+by rewrite /pi mulr2n cosD -pihalfE sin_pihalf mulr1 cos_pihalf mulr0 add0r.
 Qed.
 
 End Pi.
