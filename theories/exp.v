@@ -779,7 +779,7 @@ by move=> x_gt0 y_gt0; apply: expRI; rewrite ?expRD !lnK // mulr_gt0.
 Qed.
 
 Lemma lnI x y : 0 < x -> 0 < y -> ln x = ln y -> x = y.
-Proof. move=> /lnK {2}<- /lnK {2}<- ->. Qed.
+Proof. by move=> /lnK {2}<- /lnK {2}<- ->. Qed.
 
 Lemma lnV x : 0 < x -> ln (x^-1) = - ln x.
 Proof.
