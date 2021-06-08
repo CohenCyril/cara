@@ -45,7 +45,7 @@
   + definition `pi`
   + lemmas `pihalfE`, `cos2_lt0`, `cos_exists`
   + lemmas `pi_gt0`, `pi_ge0`
-  + lemmas `cos_inj`, `sin_inj`, `ltr_cos`, `ltr_sin`
+  + lemmas `ltr_cos`, `ltr_sin`, `cos_inj`, `sin_inj`
   + definition `tan`
   + lemmas `tan0`, `tanpi`
   + lemmas `tanN`, `tanD`, `tan_mulr2n`, `cos2_tan2`

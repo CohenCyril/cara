@@ -729,34 +729,6 @@ move=> xI; rewrite -cosBpihalf cos_gt0_pihalf //.
 by rewrite ltr_subr_addl subrr ltr_sub_addr -mulr2n -[_ *+ 2]mulr_natr divfK.
 Qed.
 
-Lemma cos_inj : {in `[0,pi] &, injective (@cos R)}.
-Proof.
-move=> x y; rewrite !in_itv/=.
-wlog xLy : x y / x <= y => [H xB yB cE|].
-  by case: (lerP x y) => [/H //| /ltW /H H1]; [exact|exact/esym/H1].
-move=> /andP[x_ge0 x_lepi] /andP[y_ge0 y_lepi] cxE.
-case: (x =P y) => // /eqP xDy.
-have xLLs : x < y by rewrite le_eqVlt (negPf xDy) in xLy.
-have /Rolle[|x1 x1I|x1 x1I|x1 /itvP x1I [_ /eqP]] // := cxE.
-  by apply: continuous_cos.
-have [_ /esym<-] := is_derive_cos x1.
-rewrite oppr_eq0 => /eqP Hs.
-suff : 0 < sin x1 by rewrite Hs ltxx.
-apply: sin_gt0_pi => //.
-by rewrite (le_lt_trans x_ge0) ?x1I // (lt_le_trans _ y_lepi) ?x1I.
-Qed.
-
-Lemma sin_inj : {in `[(- (pi/2)), (pi/2)] &, injective sin}.
-Proof.
-move=> x y; rewrite !in_itv/= => /andP[pix xpi] /andP[piy ypi] sinE.
-have : - sin x = - sin y by rewrite sinE.
-rewrite -!cosDpihalf=> {}sinE; apply/(addIr (pi/2))/cos_inj; rewrite ?in_itv//=.
-- rewrite -ler_subl_addr sub0r pix/=.
-  by rewrite -ler_subr_addr (le_trans xpi)// ler_subr_addr -splitr.
-- rewrite -ler_subl_addr sub0r piy/=.
-  by rewrite -ler_subr_addr (le_trans ypi)// ler_subr_addr -splitr.
-Qed.
-
 Lemma ltr_cos : {in `[0, pi] &, {mono cos : x y /~ y < x}}.
 Proof.
 move=> x y; rewrite !in_itv/= le_eqVlt; case: eqP => [<- _|_] /=.
@@ -801,6 +773,24 @@ Proof.
 move=> x y; rewrite !in_itv/=.
 move=> /andP[pix xpi] /andP[piy ypi]; rewrite -[sin x]opprK ltr_oppl.
 rewrite -!cosDpihalf -[x < y](ltr_add2r (pi /2)) ltr_cos// !in_itv/=.
+- rewrite -ler_subl_addr sub0r pix/=.
+  by rewrite -ler_subr_addr (le_trans xpi)// ler_subr_addr -splitr.
+- rewrite -ler_subl_addr sub0r piy/=.
+  by rewrite -ler_subr_addr (le_trans ypi)// ler_subr_addr -splitr.
+Qed.
+
+Lemma cos_inj : {in `[0,pi] &, injective (@cos R)}.
+Proof.
+move=> x y x0pi y0pi xy; apply/eqP; rewrite eq_le; apply/andP; split.
+- by have := ltr_cos y0pi x0pi; rewrite xy ltxx => /esym/negbT; rewrite -leNgt.
+- by have := ltr_cos x0pi y0pi; rewrite xy ltxx => /esym/negbT; rewrite -leNgt.
+Qed.
+
+Lemma sin_inj : {in `[(- (pi/2)), (pi/2)] &, injective sin}.
+Proof.
+move=> x y; rewrite !in_itv/= => /andP[pix xpi] /andP[piy ypi] sinE.
+have : - sin x = - sin y by rewrite sinE.
+rewrite -!cosDpihalf=> {}sinE; apply/(addIr (pi/2))/cos_inj; rewrite ?in_itv//=.
 - rewrite -ler_subl_addr sub0r pix/=.
   by rewrite -ler_subr_addr (le_trans xpi)// ler_subr_addr -splitr.
 - rewrite -ler_subl_addr sub0r piy/=.
