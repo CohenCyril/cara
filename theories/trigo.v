@@ -80,7 +80,7 @@ by rewrite /ball /= distrC.
 Grab Existential Variables. all: end_near. Qed.
 
 Lemma SER_PAIR (R : realFieldType) (f : R ^nat) : cvg (series f) ->
- series (fun n => \sum_(n.*2 <= i < n.*2 + 2) f i) --> lim (series f).
+  series (fun n => \sum_(n.*2 <= i < n.*2 + 2) f i) --> lim (series f).
 Proof.
 move=> cf; rewrite [X in series X --> _](_ : _ =
     (fun n => \sum_(n * 2 <= k < n.+1 * 2) f k)); last first.
@@ -146,12 +146,9 @@ Implicit Types x : R.
 Definition sin_coeff x :=
    [sequence  (odd n)%:R * (-1) ^+ n.-1./2 * x ^+ n / n`!%:R]_n.
 
-Lemma sin_coeffE x :
-  sin_coeff x = (fun n => (fun n => (odd n)%:R * (-1) ^+ n.-1./2 *
-                                    (n`!%:R)^-1) n * x ^+ n).
-Proof.
-by apply/funext => i; rewrite /sin_coeff /= -!mulrA [_ / _]mulrC.
-Qed.
+Lemma sin_coeffE x : sin_coeff x =
+  (fun n => (fun n => (odd n)%:R * (-1) ^+ n.-1./2 * (n`!%:R)^-1) n * x ^+ n).
+Proof. by apply/funext => i; rewrite /sin_coeff /= -!mulrA [_ / _]mulrC. Qed.
 
 Lemma sin_coeff_even n x : sin_coeff x n.*2 = 0.
 Proof. by rewrite /sin_coeff /= odd_double /= !mul0r. Qed.
@@ -319,7 +316,7 @@ pose s1 n := diffs s n * x ^+ n.
 rewrite cosE /=.
 rewrite (_ : (fun n => _) = s1); last first.
   by apply/funext => i; rewrite /s1 diffs_sin.
-apply: (@termdiff _ _ (`|x| + 1)).
+apply: (@termdiffs _ _ (`|x| + 1)).
 - rewrite -sin_coeffE; apply: is_cvg_series_sin_coeff.
 - rewrite (_ : (fun n : nat => _) = cos_coeff (`|x| + 1)).
     by apply: is_cvg_series_cos_coeff.
@@ -356,7 +353,7 @@ rewrite lim_seriesN ?opprK; last first.
     by apply: is_cvg_series_sin_coeff.
   apply/funext => i.
   by rewrite /s1 diffs_cos sin_coeffE; rcfE; rewrite mulNr.
-apply: (@termdiff _ _ (`|x| + 1)).
+apply: (@termdiffs _ _ (`|x| + 1)).
 - by rewrite -cos_coeffE; apply: is_cvg_series_cos_coeff.
 - rewrite (_ : (fun n : nat => _) = - sin_coeff (`|x| + 1)).
     rewrite is_cvg_seriesN.
@@ -459,7 +456,7 @@ Lemma cos_mulr2n a : cos (a *+ 2) = cos a ^+2 *+ 2 - 1.
 Proof. by rewrite mulr2n cosD -!expr2 sin2cos2 opprB addrA mulr2n. Qed.
 
 Lemma sinN_aux x :
-    (sin (- x ) + sin x) ^+ 2 + (cos (- x) - cos x) ^+ 2 = 0.
+  (sin (- x ) + sin x) ^+ 2 + (cos (- x) - cos x) ^+ 2 = 0.
 Proof.
 pose f := (sin \o -%R + sin)^+2 + (cos \o -%R - cos )^+2.
 apply: etrans (_ : f x = 0); first by [].
@@ -644,7 +641,6 @@ wlog : x / 0 <= x => [Hw|x_ge0].
   case: (leP 0 x) => [/Hw//| x_lt_0].
   rewrite -{-1}[x]opprK ltr_oppl andbC [-- _ < _]ltr_oppl cosN.
   by apply: Hw => //; rewrite oppr_cp0 ltW.
-have /andP[pi2_gt0 pi2L2] := pihalf_02.
 move=> /andP[x_gt0 xLpi2]; case: (ler0P (cos x)) => // cx_le0.
 have /IVT[]// : minr (cos 0) (cos x) <= 0 <= maxr (cos 0) (cos x).
   by rewrite cos0 /minr /maxr !ifN ?cx_le0 //= -leNgt (le_trans cx_le0).
@@ -653,6 +649,7 @@ move=> x1 /itvP Hx1 cx1_eq0.
 suff x1E : x1 = pi/2.
   have : x1 < pi / 2 by apply: le_lt_trans xLpi2; rewrite Hx1.
   by rewrite x1E ltxx.
+have /andP[pi2_gt0 pi2L2] := pihalf_02.
 apply: cos_pihalf_uniq=> //; last by (case cos_pihalf' => _ ->).
   by rewrite Hx1 ltW // (lt_trans _ pi2L2) // (le_lt_trans _ xLpi2) // Hx1.
 by rewrite !ltW.
