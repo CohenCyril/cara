@@ -8,8 +8,19 @@
   + lemma `dvg_harmonic`
 - new file `nsatz_realType`
 - new file `exp.v`
+  + lemma `normr_nneg` (hint)
+  + lemmas `cvg_series_bounded`, `eq_cvgl`
+  + lemmas `seriesN`, `seriesZr`, `seriesD`, `is_cvg_seriesN`, `lim_seriesN`, `is_cvg_seriesZr`,
+    `lim_seriesZr`, `is_cvg_seriesD`, `lim_seriesD`, `is_cvg_seriesB`, `lim_seriesB`,
+    `lim_series_norm`, `lim_series_le`, `cvg_to_0_linear`, `lim_cvg_to_0_linear`,
+    `continuous_shift`, `continuous_withinNshiftx`, `chain_rule`, `is_derive1_id`,
+    `is_derive_0_cst`
+  + instance `is_derive1_chain`, `is_deriveV`
+  + lemma `trigger_derive`
+  + ltac `rcfE`
+  + facts `is_cvg_series_Xn_inside_norm`, `is_cvg_series_Xn_inside`
   + definition `diffs`
-  + lemmas `diffsN`, `diffs_sumE`, `diffs_equiv`, `cvg_diffs_equiv`, `termdiffs`
+  + lemmas `diffsN`, `diffs_inv_fact`, `diffs_sumE`, `diffs_equiv`, `is_cvg_diffs_equiv`, `termdiffs`
   + lemmas `expR0`, `expR_ge1Dx`, `exp_coeffE`, `expRE`
   + instance `is_derive_expR`
   + lemmas `derivable_expR`, `continuous_expR`, `expRxDyMexpx`, `expRxMexpNx_1`
@@ -25,6 +36,8 @@
     `exp_funD`, `exp_fun_inv`, `exp_fun_mulrn`
   + definition `riemannR`, lemmas `riemannR_gt0`, `dvg_riemannR`
 - new file `trigo.v`
+  + lemmas `sqrtvR`, `divr_eq`, `sum_group`, `cvg_series_cvg_series_group`,
+    `cvg_series_cvg_series_group2`, `lt_sum_lim_series`
   + definitions `periodic`, `alternating`
   + lemmas `periodicn`, `alternatingn`
   + definition `sin_coeff`
