@@ -19,6 +19,9 @@ Require Import derive.
 (* alternating f T == f is a periodic function of period T                    *)
 (*              pi == pi                                                      *)
 (*           tan x == the tangent function                                    *)
+(*          acos x == the arccos function                                     *)
+(*          asin x == the arcsin function                                     *)
+(*          atan x == the arctangent function                                 *)
 (*                                                                            *)
 (* TODO: credit HOL-light (and coq-robot?)                                    *)
 (*                                                                            *)
@@ -706,7 +709,7 @@ case: (ltrgtP x y) => [xLy|yLx|<-].
 by rewrite lexx.
 Qed.
 
-Lemma expRI : injective (@expR R).
+Lemma expR_inj : injective (@expR R).
 Proof.
 move=> x y exE.
 by have [] := (ltr_expR x y, ltr_expR y x); rewrite exE ltxx; case: ltrgtP.
@@ -758,37 +761,45 @@ Qed.
 
 Lemma expK : cancel exp ln.
 Proof.
-by move=> x; rewrite /ln; case: xgetP => [x1 _ /eqP/expRI //|/(_ x)[]/=].
+by move=> x; rewrite /ln; case: xgetP => [x1 _ /eqP/expR_inj //|/(_ x)[]/=].
 Qed.
 
-Lemma lnK x : 0 < x -> exp (ln x) = x.
+Lemma lnK : {in Num.pos, cancel ln exp}.
 Proof.
-move=> x_gt0; rewrite /ln; case: xgetP=> [x1 _ /eqP// |H].
+move=> x; rewrite qualifE => x_gt0.
+rewrite /ln; case: xgetP=> [x1 _ /eqP// |H].
 by case: (expR_total x_gt0) => y /eqP Hy; case: (H y).
 Qed.
 
 Lemma lnK_eq x : (exp (ln x) == x) = (0 < x).
-Proof. by apply/eqP/idP=> [<-|]; [exact: expR_gt0|exact: lnK]. Qed.
+Proof.
+apply/eqP/idP=> [<-|]; first exact: expR_gt0.
+by move=> x0; rewrite lnK// in_itv/= x0.
+Qed.
 
 Lemma ln1 : ln 1 = 0.
-Proof. by apply/expRI; rewrite lnK // expR0. Qed.
+Proof. by apply/expR_inj; rewrite lnK// ?expR0// qualifE. Qed.
 
-Lemma lnM x y : 0 < x -> 0 < y -> ln (x * y) = ln x + ln y.
+Lemma lnM : {in Num.pos &, {morph ln : x y / x * y >-> x + y}}.
 Proof.
-by move=> x_gt0 y_gt0; apply: expRI; rewrite ?expRD !lnK // mulr_gt0.
+move=> x y x0 y0; apply: expR_inj; rewrite expRD !lnK//.
+by move: x0 y0; rewrite !qualifE; exact: mulr_gt0.
 Qed.
 
-Lemma lnI x y : 0 < x -> 0 < y -> ln x = ln y -> x = y.
-Proof. by move=> /lnK {2}<- /lnK {2}<- ->. Qed.
+Lemma ln_inj : {in Num.pos &, injective ln}.
+Proof. by move=> x y /lnK {2}<- /lnK {2}<- ->. Qed.
 
-Lemma lnV x : 0 < x -> ln (x^-1) = - ln x.
+Lemma lnV : {in Num.pos, {morph ln : x / x ^-1 >-> - x}}.
 Proof.
-move=> x_gt0; have xVP : 0 < x^-1 by rewrite invr_gt0.
-by apply: expRI; rewrite lnK // expRN lnK.
+move=> x x0; apply: expR_inj; rewrite lnK// ?expRN ?lnK//.
+by move: x0; rewrite !qualifE invr_gt0.
 Qed.
 
-Lemma ln_div x y : 0 < x -> 0 < y -> ln (x / y) = ln x - ln y.
-Proof. by move=> x_gt0 y_gt0; rewrite lnM  ?invr_gt0 // lnV. Qed.
+Lemma ln_div : {in Num.pos &, {morph ln : x y / x / y >-> x - y}}.
+Proof.
+move=> x y x0 y0; rewrite (lnM x0) ?lnV//.
+by move: y0; rewrite !qualifE/= invr_gt0.
+Qed.
 
 Lemma ltr_ln : {in Num.pos &, {mono ln : x y / x < y}}.
 Proof. by move=> x y x_gt0 y_gt0; rewrite -ltr_expR !lnK. Qed.
@@ -798,8 +809,8 @@ Proof. by move=> x y x_gt0 y_gt0; rewrite -ler_expR !lnK. Qed.
 
 Lemma lnX n x : 0 < x -> ln(x ^+ n) = ln x *+ n.
 Proof.
-move=> x_gt0; elim: n => [|n IH] /=; first by rewrite expr0 ln1 mulr0n.
-by rewrite !exprS lnM ?exprn_gt0 // -add1n mulrnDr mulr1n IH.
+move=> x_gt0; elim: n => [|n ih] /=; first by rewrite expr0 ln1 mulr0n.
+by rewrite !exprS lnM ?qualifE// ?exprn_gt0// mulrS ih.
 Qed.
 
 Lemma ln_le1Dx x : 0 <= x -> ln (1 + x) <= x.
@@ -811,18 +822,18 @@ Qed.
 Lemma ln_sublinear x : 0 < x -> ln x < x.
 Proof.
 move=> x_gt0; apply: lt_le_trans (_ : ln (1 + x) <= _).
-  by rewrite -ltr_expR !lnK ?addr_gt0 // ltr_addr.
-by rewrite -ler_expR lnK ?addr_gt0 // expR_ge1Dx // ltW.
+  by rewrite -ltr_expR !lnK ?qualifE ?addr_gt0 // ltr_addr.
+by rewrite -ler_expR lnK ?qualifE ?addr_gt0// expR_ge1Dx // ltW.
 Qed.
 
 Lemma ln_ge0 x : 1 <= x -> 0 <= ln x.
 Proof.
-by move=> x_ge1; rewrite -ler_expR expR0 lnK // (lt_le_trans _ x_ge1).
+by move=> x_ge1; rewrite -ler_expR expR0 lnK// qualifE (lt_le_trans _ x_ge1).
 Qed.
 
 Lemma ln_gt0 x : 1 < x -> 0 < ln x.
 Proof.
-by move=> x_gt1; rewrite -ltr_expR expR0 lnK // (lt_trans _ x_gt1).
+by move=> x_gt1; rewrite -ltr_expR expR0 lnK // qualifE (lt_trans _ x_gt1).
 Qed.
 
 End Ln.
@@ -1224,6 +1235,7 @@ End CosSin.
 Arguments sin {R}.
 Arguments cos {R}.
 
+(* TODO: rename *)
 Lemma SUM_GROUP (R : zmodType) (f : R ^nat) (n k : nat) :
   \sum_(0 <= i < n) \sum_(i * k <= j < i.+1 * k) f j =
   \sum_(0 <= i < n * k) f i.
@@ -1473,6 +1485,8 @@ Proof.
 by rewrite -[pi](divfK (_ : 2 != 0)) // mulr_gt0 //; case/andP: pihalf_02.
 Qed.
 
+Lemma pi_ge0 : 0 <= pi. Proof. exact: (ltW pi_gt0). Qed.
+
 Lemma sin_gt0_halfpi x : 0 < x < pi / 2 -> 0 < sin x.
 Proof.
 move=> /andP[x_gt0 xLpi].
@@ -1604,11 +1618,9 @@ by rewrite -!cosDpihalf => {}sinE;
            mulr_natr [(pi/2) *+ 2]mulr2n ler_add2r.
 Qed.
 
-(* Maybe this should be stated with mono *)
-Lemma cos_nmono x y : 0 <= x <= pi -> 0 <= y <= pi -> (cos y < cos x) = (x < y).
+Lemma ltr_cos : {in `[0, pi] &, {mono cos : x y /~ y < x}}.
 Proof.
-(* There should be a better proof *)
-rewrite le_eqVlt; case: eqP => [<- _|_] /=.
+move=> x y; rewrite !in_itv/= le_eqVlt; case: eqP => [<- _|_] /=.
   rewrite cos0 le_eqVlt; case: eqP => /= [<- _|_ /andP[y_gt0 gLpi]].
     by rewrite cos0 !ltxx.
   rewrite y_gt0; apply/idP.
@@ -1645,15 +1657,15 @@ rewrite -mulNr opprK mulr_gt0 //; apply: sin_gt0_pi.
 by rewrite (lt_le_trans x_gt0) ?zI //= (le_lt_trans _ y_ltpi) ?zI.
 Qed.
 
-Lemma sin_mono x y :
- -(pi/2) <= x <= pi/2 -> -(pi/2) <= y <= pi/2 -> (sin x < sin y) = (x < y).
+Lemma ltr_sin : {in `[ (- (pi/2)), pi/2] &, {mono sin : x y / x < y}}.
 Proof.
-move=> xB yB; rewrite -[sin x]opprK ltr_oppl.
-rewrite -!cosDpihalf -[x < y](ltr_add2r (pi /2)).
-by apply: cos_nmono;
-    rewrite -[pi/2 in X in X && _]opprK subr_ge0;
-    rewrite -[pi in X in _ && (_ <= X)](divfK (_ : 2 != 0)) //
-           mulr_natr [(pi/2) *+ 2]mulr2n ler_add2r.
+move=> x y; rewrite !in_itv/=.
+move=> /andP[pix xpi] /andP[piy ypi]; rewrite -[sin x]opprK ltr_oppl.
+rewrite -!cosDpihalf -[x < y](ltr_add2r (pi /2)) ltr_cos// !in_itv/=.
+- rewrite -ler_subl_addr sub0r pix/=.
+  by rewrite -ler_subr_addr (le_trans xpi)// ler_subr_addr -splitr.
+- rewrite -ler_subl_addr sub0r piy/=.
+  by rewrite -ler_subr_addr (le_trans ypi)// ler_subr_addr -splitr.
 Qed.
 
 End Pi.
@@ -1747,13 +1759,9 @@ Lemma tan_quaterpi : tan (pi / 4%:R) = 1.
 Proof.
 rewrite /tan -cosBpihalf -mulNr addf_div // mulNr -mulrBr.
 rewrite -opprB -natrB //= !(mulrN, mulNr) cosN invfM [_/2]mulrC mulrA mulfK //.
-rewrite divff // lt0r_neq0 // -cos_pihalf.
-have pi_gt0 := pi_gt0 R.
-rewrite cos_nmono ?lter_pdivr_mulr ?divr_ge0 ?ltW ?pi_gt0 //.
-- by rewrite -[X in X < _](divfK (_ : 2 != 0)) // ltr_pmul2l ?ltr_nat//
-              divr_gt0.
-- by rewrite -[X in X < _]mulr1 ltr_pmul2l ?(ltr_nat _ 1).
-by rewrite  mulr_natr mulr2n ltr_addr.
+rewrite divff// lt0r_neq0// -cos_pihalf ltr_cos; try
+  by rewrite in_itv/= divr_ge0 ?(pi_ge0,ler_pdivr_mulr,ler_pmulr,pi_gt0,ler1n).
+by rewrite ltr_pmul2l ?pi_gt0// ltf_pinv// ?(ltr_nat,qualifE).
 Qed.
 
 Lemma tanDpi x : tan (x + pi) = tan x.
@@ -1780,10 +1788,9 @@ Qed.
 Lemma derivable_tan x : cos x != 0 -> derivable tan x 1.
 Proof. by move=> /is_derive_tan[]. Qed.
 
-(* Maybe this should be stated with mono *)
-Lemma tan_mono x y :
-  -(pi /2) < x < pi/2 -> -(pi /2) < y < pi/2 -> (tan x < tan y) = (x < y).
+Lemma ltr_tan : {in `](- (pi/2)), (pi/2)[ &, {mono tan : x y / x < y}}.
 Proof.
+move=> x y; rewrite !in_itv/=.
 wlog xLy : x y / x <= y => [H xB yB|xB yB].
   case: (lerP x y) => [/H //->//|yLx].
   by rewrite !ltNge ltW ?(ltW yLx) // H // ltW.
@@ -1808,11 +1815,10 @@ rewrite (lt_le_trans (_ : _ < x)); last by rewrite x1I.
 by case/andP: xB.
 Qed.
 
-Lemma tanI x y :
-  -(pi /2) < x < pi/2 -> -(pi /2) < y < pi/2 -> tan x = tan y -> x = y.
+Lemma tan_inj : {in `](- (pi/2)), (pi/2)[ &, injective tan}.
 Proof.
-move=> xB yB tanE.
-by case: (ltrgtP x y); rewrite // -tan_mono ?tanE ?ltxx.
+move=> x y xB yB tanE.
+by case: (ltrgtP x y); rewrite // -ltr_tan ?tanE ?ltxx.
 Qed.
 
 End Tan.
@@ -1848,14 +1854,14 @@ Proof. by move=> /acos_def[/andP[]]. Qed.
 Lemma acos_lepi x : -1 <= x <= 1 -> acos x <= pi.
 Proof. by move=> /acos_def[/andP[]]. Qed.
 
-Lemma acosK x : -1 <= x <= 1 -> cos(acos x) = x.
-Proof. by move=> /acos_def[/andP[]]. Qed.
+Lemma acosK : {in `[(-1),1], cancel acos cos}.
+Proof. by move=> x; rewrite in_itv/==> /acos_def[/andP[]]. Qed.
 
 Lemma acos_gt0 x : -1 <= x < 1 -> 0 < acos x.
 Proof.
 move=> /andP[x_geN1 x_lt1]; move: (x_lt1).
 have : 0 <= acos x by rewrite acos_ge0 // x_geN1 ltW.
-have : cos(acos x) = x by rewrite acosK // x_geN1 ltW.
+have : cos (acos x) = x by rewrite acosK// in_itv/= x_geN1/= ltW.
 by case: ltrgt0P => // ->; rewrite cos0 => ->; rewrite ltxx.
 Qed.
 
@@ -1863,15 +1869,16 @@ Lemma acos_ltpi x : -1 < x <= 1 -> acos x < pi.
 Proof.
 move=> /andP[x_gtN1 x_le1]; move: (x_gtN1).
 have : acos x <= pi by rewrite acos_lepi // x_le1 ltW.
-have : cos(acos x) = x by rewrite acosK // x_le1 ltW.
+have : cos(acos x) = x by rewrite acosK// in_itv/= x_le1 ltW.
 by case: (ltrgtP (acos x) pi) => // ->; rewrite cospi => ->; rewrite ltxx.
 Qed.
 
-Lemma cosK x : 0 <= x <= pi -> acos (cos x) = x.
+Lemma cosK : {in `[0, pi], cancel cos acos}.
 Proof.
-move=> xB; apply: cosI => //.
+move=> x; rewrite in_itv/= => xB.
+apply: cosI => //.
   by rewrite acos_ge0 ?acos_lepi ?cos_geN1 ?cos_le1.
-by rewrite acosK // cos_geN1 cos_le1.
+by rewrite acosK// in_itv/= cos_geN1 cos_le1.
 Qed.
 
 Lemma sin_acos x : -1 <= x <= 1 -> sin (acos x) = Num.sqrt (1 - x^+2).
@@ -1914,14 +1921,14 @@ Proof. by move=> /asin_def[/andP[]]. Qed.
 Lemma asin_lepi2 x : -1 <= x <= 1 -> asin x <= pi / 2.
 Proof. by move=> /asin_def[/andP[]]. Qed.
 
-Lemma asinK x : -1 <= x <= 1 -> sin (asin x) = x.
-Proof. by move=> /asin_def[/andP[]]. Qed.
+Lemma asinK : {in `[(-1),1], cancel asin sin}.
+Proof. by move=> x; rewrite in_itv/= => /asin_def[/andP[]]. Qed.
 
 Lemma asin_gtpi x : -1 <= x < 1 -> asin x < pi/2.
 Proof.
 move=> /andP[x_geN1 x_lt1]; move: (x_lt1).
 have : asin x <= pi / 2 by rewrite asin_lepi2 // x_geN1 ltW.
-have : sin (asin x) = x by rewrite asinK // x_geN1 ltW.
+have : sin (asin x) = x by rewrite asinK// in_itv/= x_geN1 ltW.
 case: (ltrgtP _ ((pi / 2))) => // ->.
 by rewrite sin_pihalf => <-; rewrite ltxx.
 Qed.
@@ -1930,16 +1937,16 @@ Lemma asin_gtNpi2 x : -1 < x <= 1 -> - (pi / 2) < asin x.
 Proof.
 move=> /andP[x_gtN1 x_le1]; move: (x_gtN1).
 have : - (pi / 2) <= asin x by rewrite asin_geNpi2 // x_le1 ltW.
-have : sin (asin x) = x by rewrite asinK // x_le1 ltW.
+have : sin (asin x) = x by rewrite asinK// in_itv/= x_le1 ltW.
 by case: (ltrgtP (asin x)) => // ->;
    rewrite sinN sin_pihalf => <-; rewrite ltxx.
 Qed.
 
-Lemma sinK x : - (pi / 2) <= x <= pi / 2 -> asin (sin x) = x.
+Lemma sinK : {in `[(- (pi / 2)), pi / 2], cancel sin asin}.
 Proof.
-move=> xB; apply: sinI => //.
+move=> x; rewrite in_itv/= => xB; apply: sinI => //.
   by rewrite asin_geNpi2 ?asin_lepi2 ?sin_geN1 ?sin_le1.
-by rewrite asinK // sin_geN1 sin_le1.
+by rewrite asinK// in_itv/= sin_geN1 sin_le1.
 Qed.
 
 Lemma cos_asin x : -1 <= x <= 1 -> cos (asin x) = Num.sqrt (1 - x^+2).
@@ -1965,6 +1972,7 @@ Notation pi := (@pi R).
 Definition atan (x : R) :=
   get [set y | -(pi / 2) < y < pi / 2 /\ tan y = x].
 
+(* TODO: move *)
 Lemma sqrtrV (x : R) : 0 <= x -> Num.sqrt (x^-1) = (Num.sqrt x)^-1.
 Proof.
 move=> x_ge0.
@@ -2007,9 +2015,8 @@ have pi2 : 0 < pi / 2 by rewrite divr_gt0 // pi_gt0.
 case: (x =P 0) => [->|/eqP xD0]; first by rewrite sgr0 normr0 mul0r.
 rewrite normr_sg xD0 mul1r ltr_norml.
 rewrite (lt_le_trans (_ : _ < 0)) ?acos_ge0 ?oppr_cp0 //=.
-rewrite -cos_nmono ?(acos_ge0, acos_lepi) //; last first.
-   by rewrite ltW //= ler_pdivr_mulr // mulr2n mulrDr mulr1
-              ler_addr ltW // pi_gt0.
+rewrite -ltr_cos ?in_itv/= ?acos_ge0/= ?acos_lepi//; last first.
+  by rewrite divr_ge0 ?pi_ge0//= ler_pdivr_mulr// ler_pmulr ?pi_gt0// ler1n.
 by rewrite cos_pihalf acosK // ?sqrtr_gt0 ?invr_gt0.
 Qed.
 
@@ -2019,14 +2026,13 @@ Proof. by case: (atan_def x) => [] /andP[]. Qed.
 Lemma atan_ltpi2 x : atan x < pi / 2.
 Proof. by case: (atan_def x) => [] /andP[]. Qed.
 
-Lemma atanK x : tan (atan x) = x.
-Proof. by case: (atan_def x). Qed.
+Lemma atanK : cancel atan tan.
+Proof. by move=> x; case: (atan_def x). Qed.
 
-Lemma tanK x : - (pi / 2) < x < pi / 2 -> atan (tan x) = x.
+Lemma tanK : {in `](- (pi / 2)), (pi / 2)[ , cancel tan atan}.
 Proof.
-move=> xB; apply: tanI => //.
-  by rewrite !(atan_gtNpi2, atan_ltpi2).
-by rewrite atanK.
+move=> x xB; apply tan_inj => //; rewrite ?atanK//.
+by rewrite in_itv/= atan_gtNpi2 atan_ltpi2.
 Qed.
 
 End Atan.
