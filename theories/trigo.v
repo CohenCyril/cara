@@ -1006,7 +1006,7 @@ rewrite in_itv /= -ltr_subl_addl -ltr_subr_addl ltr_normlW /=; last first.
 rewrite -ltr_subr_addr ltr_normlW //.
 near: z; apply: nbhs0_lt; rewrite (lt_le_trans minlt) //.
 by rewrite le_minl lexx orbT.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 Lemma continuous_acos x : -1 < x < 1 -> {for x, continuous acos}.
 Proof.
@@ -1020,7 +1020,7 @@ near=> z; apply: cosK.
 suff /itvP zI : z \in `]0, pi[.
   by have : 0 <= z <= pi by rewrite ltW ?zI.
 by near: z.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 Global Instance is_derive1_acos (x : R) :
   -1 < x < 1 -> is_derive x 1 acos (- (Num.sqrt (1 - x ^+ 2))^-1).
@@ -1038,7 +1038,7 @@ apply: (@is_derive_inverse R cos).
 rewrite oppr_eq0 sin_acos ?ltW // sqrtr_eq0 // -ltNge subr_gt0.
 rewrite -real_normK ?qualifE; last by case: ltrgt0P.
 by rewrite exprn_cp1 // ltr_norml x_gtN1.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 End Acos.
 
@@ -1118,7 +1118,7 @@ near=> z; apply: sinK.
 suff /itvP zI : z \in `](-(pi/2)), (pi/2)[.
   by have : -(pi/2) <= z <= pi/2 by rewrite ltW ?zI.
 by near: z.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 Global Instance is_derive1_asin (x : R) :
   -1 < x < 1 -> is_derive x 1 asin ((Num.sqrt (1 - x ^+ 2))^-1).
@@ -1137,7 +1137,7 @@ apply: (@is_derive_inverse R sin).
 rewrite cos_asin ?ltW // sqrtr_eq0 // -ltNge subr_gt0.
 rewrite -real_normK ?qualifE; last by case: ltrgt0P.
 by rewrite exprn_cp1 // ltr_norml x_gtN1.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 End Asin.
 
@@ -1218,7 +1218,7 @@ apply: (@continuous_inverse R tan); last first.
   apply/lt0r_neq0; apply: cos_gt0_pihalf.
   by near: z.
 by near=> z; apply: tanK; near: z.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 (* Lemma cos_atan x : cos (atan x) = (Num.sqrt (1 + x ^+ 2))^-1 *)
 Lemma cos_atan x : cos(atan x) ^- 2 = 1 + x ^+ 2.
@@ -1242,7 +1242,7 @@ apply: (@is_derive_inverse R tan).
 apply: lt0r_neq0.
 apply: lt_le_trans (_ : 1 <= _) => //.
 by rewrite ler_addl sqr_ge0.
-Unshelve. all: end_near. Qed.
+Grab Existential Variables. all: end_near. Qed.
 
 End Atan.
 
