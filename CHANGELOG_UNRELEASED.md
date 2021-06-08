@@ -7,10 +7,13 @@
 - in `sequences.v`:
   + lemma `dvg_harmonic`
 - new file `exp.v`
-  + lemma `expR_inj`
+  + definition `diffs`
+  + lemmas `diffsN`, `diffs_sumE`, `diffs_equiv`, `cvg_diffs_equiv`, `termdiff`
+  + lemmas `expR0`, `expR_inj`
   + definition `ln`
   + lemmas `lnK`, `ln1`, `lnM`, `ln_inj`, `lnV`, `ln_div`, `ltr_ln`, `ler_ln`, `lnX`
   + definition `exp_fun`, notation `^
+- new file `trigo.v`
   + definition `sin`
   + lemma `sin0`
   + definition `cos`
