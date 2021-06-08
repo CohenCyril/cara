@@ -18,7 +18,7 @@ Require Import derive.
 (*                                                                            *)
 (*             ln x == the natural logarithm                                  *)
 (*           a `^ x == exponential functions                                  *)
-(*       riemannR a == sequence n |-> 1 / (n.+1) ^ a where a has a type of    *)
+(*       riemannR a == sequence n |-> 1 / (n.+1) `^ a where a has a type of   *)
 (*                     type realType                                          *)
 (*                                                                            *)
 (******************************************************************************)
@@ -630,7 +630,7 @@ Qed.
 Lemma expRxMexpNx_1 x : expR x * expR (- x) = 1.
 Proof. by rewrite -[X in _ X * _ = _]addr0 expRxDyMexpx expR0. Qed.
 
-Lemma pexpR_gt1 x: 0 < x -> 1 < expR x.
+Lemma pexpR_gt1 x : 0 < x -> 1 < expR x.
 Proof.
 move=> x_gt0.
 apply: lt_le_trans (expR_ge1Dx (ltW x_gt0)).
@@ -805,7 +805,7 @@ move=> x_gt0; elim: n => [|n ih] /=; first by rewrite expr0 ln1 mulr0n.
 by rewrite !exprS lnM ?qualifE// ?exprn_gt0// mulrS ih.
 Qed.
 
-Lemma ln_le1Dx x : 0 <= x -> ln (1 + x) <= x.
+Lemma le_ln1Dx x : 0 <= x -> ln (1 + x) <= x.
 Proof.
 move=> x_ge0; rewrite -ler_expR lnK ?expR_ge1Dx //.
 by apply: lt_le_trans (_ : 0 < 1) _; rewrite // ler_addl.
@@ -840,8 +840,11 @@ Local Notation "a `^ x" := (exp_fun a x).
 
 Lemma exp_fun_gt0 a x : 0 < a `^ x. Proof. by rewrite expR_gt0. Qed.
 
-Lemma exp_funa1 a : 0 < a -> a `^ 1 = a.
+Lemma exp_funr1 a : 0 < a -> a `^ 1 = a.
 Proof. by move=> a0; rewrite /exp_fun mul1r lnK. Qed.
+
+Lemma exp_funr0 a : 0 < a -> a `^ 0 = 1.
+Proof. by move=> a0; rewrite /exp_fun mul0r expR0. Qed.
 
 Lemma exp_fun1 : exp_fun 1 = fun=> 1.
 Proof. by rewrite funeqE => x; rewrite /exp_fun ln1 mulr0 expR0. Qed.
@@ -852,28 +855,22 @@ Proof. by move=> a1 x y xy; rewrite /exp_fun ler_expR ler_pmul2r // ln_gt0. Qed.
 Lemma exp_funD a : 0 < a -> {morph exp_fun a : x y / x + y >-> x * y}.
 Proof. by move=> a0 x y; rewrite [in LHS]/exp_fun mulrDl expRD. Qed.
 
-Lemma exp_funa0 a : 0 < a -> a `^ 0 = 1.
-Proof. by move=> a0; rewrite /exp_fun mul0r expR0. Qed.
-
 Lemma exp_fun_inv a : 0 < a -> a `^ (-1) = a ^-1.
 Proof.
 move=> a0.
 apply/(@mulrI _ a); first by rewrite unitfE gt_eqF.
-rewrite -[X in X * _ = _](exp_funa1 a0) -exp_funD // subrr exp_funa0 //.
+rewrite -[X in X * _ = _](exp_funr1 a0) -exp_funD // subrr exp_funr0 //.
 by rewrite divrr // unitfE gt_eqF.
 Qed.
 
 Lemma exp_fun_mulrn a n : 0 < a -> exp_fun a n%:R = a ^+ n.
 Proof.
-move=> a0; elim: n => [|n ih]; first by rewrite mulr0n expr0 exp_funa0.
-by rewrite -addn1 natrD exp_funD // exprD ih exp_funa1.
+move=> a0; elim: n => [|n ih]; first by rewrite mulr0n expr0 exp_funr0.
+by rewrite -addn1 natrD exp_funD // exprD ih exp_funr1.
 Qed.
 
 End ExpFun.
 Notation "a `^ x" := (exp_fun a x).
-
-Lemma dvg_harmonic (R : numFieldType) : ~ cvg (@series [zmodType of R^o] harmonic).
-Admitted. (* NB(rei): this is in master, we just need to rebase *)
 
 Section riemannR_series.
 Variable R : realType.
@@ -890,11 +887,11 @@ Lemma dvg_riemannR a : 0 < a <= 1 -> ~ cvg (series (riemannR a)).
 Proof.
 case/andP => a0; rewrite le_eqVlt => /orP[/eqP ->|a1].
   rewrite (_ : riemannR 1 = harmonic); first exact: dvg_harmonic.
-  by rewrite funeqE => i /=; rewrite exp_funa1.
+  by rewrite funeqE => i /=; rewrite exp_funr1.
 have : forall n, harmonic n <= riemannR a n.
   case=> /= [|n]; first by rewrite exp_fun1 invr1.
   rewrite -[X in _ <= X]div1r ler_pdivl_mulr ?exp_fun_gt0 // mulrC.
-  rewrite ler_pdivr_mulr // mul1r -[X in _ <= X]exp_funa1 //.
+  rewrite ler_pdivr_mulr // mul1r -[X in _ <= X]exp_funr1 //.
   by rewrite (ler_exp_fun) // ?ltr1n // ltW.
 move/(series_le_cvg harmonic_ge0 (fun i => ltW (riemannR_gt0 i a0))).
 by move/contra_not; apply; exact: dvg_harmonic.
