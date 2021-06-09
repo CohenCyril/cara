@@ -682,7 +682,7 @@ move=> cvg_series.
 rewrite (_ : u_ = fun n => series u_ (n + 1)%nat - series u_ n); last first.
   by rewrite funeqE => i; rewrite addn1 seriesSB.
 rewrite -(subrr (lim (series u_))).
-by apply: cvgD; rewrite ?cvg_shiftn//; apply: cvgN.
+by apply: cvgB => //; rewrite ?cvg_shiftn.
 Qed.
 
 Lemma nondecreasing_series (R : numFieldType) (u_ : R ^nat) :
@@ -950,7 +950,7 @@ Proof. exact: (cvg_series_cvg_0 (@is_cvg_series_exp_coeff x)). Qed.
 End exponential_series.
 
 (* TODO: generalize *)
-Definition expR (R : realType) (x : R) : R := lim (series (exp_coeff x)).
+Definition expR {R : realType} (x : R) : R := lim (series (exp_coeff x)).
 
 Notation "\big [ op / idx ]_ ( m <= i <oo | P ) F" :=
   (lim (fun n => (\big[ op / idx ]_(m <= i < n | P) F))) : big_scope.
