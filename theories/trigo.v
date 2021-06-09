@@ -849,11 +849,11 @@ case: (x =P y) => // /eqP xDy.
 have xLLs : x < y by rewrite le_eqVlt (negPf xDy) in xLy.
 *)
 
-Lemma cos2_tan2 x : cos x != 0 -> 1 / (cos x) ^+ 2 = 1 + (tan x) ^+ 2.
+Lemma cos2_tan2 x : cos x != 0 -> (cos x) ^- 2 = 1 + (tan x) ^+ 2.
 Proof.
 move=> cosx.
 rewrite /tan exprMn [X in _ = 1 + X * _]sin2cos2 mulrBl -exprMn divff //.
-by rewrite expr1n addrCA subrr addr0 div1r mul1r exprVn.
+by rewrite expr1n addrCA subrr addr0 mul1r exprVn.
 Qed.
 
 Lemma tan_pihalf : tan (pi / 2) = 0.
@@ -1220,13 +1220,24 @@ apply: (@continuous_inverse R tan); last first.
 by near=> z; apply: tanK; near: z.
 Grab Existential Variables. all: end_near. Qed.
 
-(* Lemma cos_atan x : cos (atan x) = (Num.sqrt (1 + x ^+ 2))^-1 *)
-Lemma cos_atan x : cos(atan x) ^- 2 = 1 + x ^+ 2.
-Admitted.
+Lemma cos_atan x : cos (atan x) = (Num.sqrt (1 + x ^+ 2)) ^-1.
+Proof.
+have cos_gt0 : 0 < cos (atan x).
+  by apply: cos_gt0_pihalf;rewrite atan_gtNpi2 atan_ltpi2.
+have cosD0 : cos (atan x) != 0 by apply: lt0r_neq0.
+have /eqP : cos (atan x) ^+2 = (Num.sqrt (1 + x ^+ 2))^-2.
+  by rewrite -[LHS]invrK cos2_tan2 // atanK sqr_sqrtr // addr_ge0 // sqr_ge0.
+rewrite -exprVn eqf_sqr => /orP[] /eqP // cosE.
+move: cos_gt0; rewrite cosE ltNge; case/negP.
+by rewrite oppr_le0 invr_ge0 sqrtr_ge0.
+Qed.
 
 Global Instance is_derive1_atan (x : R) : is_derive x 1 atan (1 + x ^+ 2)^-1.
 Proof.
 rewrite -{1}[x]atanK.
+have cosD0 : cos (atan x) != 0.
+  apply/lt0r_neq0; apply: cos_gt0_pihalf.
+  by rewrite atan_gtNpi2 atan_ltpi2.
 have /near_in_interval aI : atan x \in `](-(pi/2)), (pi/2)[.
   suff : -(pi/2) < atan x < pi/2 by [].
   by rewrite atan_gtNpi2 atan_ltpi2.
@@ -1235,10 +1246,8 @@ apply: (@is_derive_inverse R tan).
 - near=> z; apply: continuous_tan.
   apply/lt0r_neq0; apply: cos_gt0_pihalf.
   by near: z.
-- rewrite -cos_atan.
-  apply: is_derive_tan.
-  apply/lt0r_neq0; apply: cos_gt0_pihalf.
-  by rewrite atan_gtNpi2 atan_ltpi2.
+- rewrite -[X in 1 + X ^+ 2]atanK -cos2_tan2 //.
+  by apply: is_derive_tan.
 apply: lt0r_neq0.
 apply: lt_le_trans (_ : 1 <= _) => //.
 by rewrite ler_addl sqr_ge0.
