@@ -17,6 +17,7 @@
   + HB.structure `AlgebraOfSets` and notation `algebraOfSetsType`
   + HB.instance `T_isAlgebraOfSets` in HB.builders `isAlgebraOfSets`
   + lemma `adde_undef_nneg_series`
+  + lemma `adde_def_nneg_series`
 - in `measure.v`:
   + lemmas `epsilon_trick`, 
   + definition `measurable_cover`
