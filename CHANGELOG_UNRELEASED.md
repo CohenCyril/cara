@@ -16,6 +16,15 @@
   + HB.mixin `AlgebraOfSets_from_RingOfSets`
   + HB.structure `AlgebraOfSets` and notation `algebraOfSetsType`
   + HB.instance `T_isAlgebraOfSets` in HB.builders `isAlgebraOfSets`
+  + lemma `adde_undef_nneg_series`
+- in `measure.v`:
+  + lemmas `epsilon_trick`, 
+  + definition `measurable_cover`
+  + lemmas `cover_measurable`, `cover_subset`
+  + definition `mu_ext`
+  + lemmas `le_mu_ext`, `mu_ext_ge0`, `mu_ext0`, `measurable_uncurry`,
+    `mu_ext_sigma_subadditive`
+  + canonical `outer_measure_of_measure`
 
 ### Changed
 
