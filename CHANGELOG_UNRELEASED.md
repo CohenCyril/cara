@@ -16,6 +16,8 @@
   + HB.mixin `AlgebraOfSets_from_RingOfSets`
   + HB.structure `AlgebraOfSets` and notation `algebraOfSetsType`
   + HB.instance `T_isAlgebraOfSets` in HB.builders `isAlgebraOfSets`
+- in `measure.v`:
+  + definition `measurable_fun`
 
 ### Changed
 
