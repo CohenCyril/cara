@@ -16,6 +16,11 @@
   + HB.mixin `AlgebraOfSets_from_RingOfSets`
   + HB.structure `AlgebraOfSets` and notation `algebraOfSetsType`
   + HB.instance `T_isAlgebraOfSets` in HB.builders `isAlgebraOfSets`
+- in `ereal.v`:
+  + lemmas `ge0_adde_def`, `onee_neq0`, `mule0`, `mul0e`
+  + lemmas `mulrEDr`, `mulrEDl`, `ge0_muleDr`, `ge0_muleDl`
+  + lemmas `sume_distrl`, `sume_distrr`
+  + lemmas `mulEFin`, `mule_neq0`, `mule_ge0`, `muleA`
 
 ### Changed
 
@@ -33,6 +38,8 @@
   + HB.mixin `Measurable_from_ringOfSets` changed to `Measurable_from_algebraOfSets`
   + HB.instance `T_isRingOfSets` becomes `T_isAlgebraOfSets` in HB.builders `isMeasurable`
   + lemma `measurableC` now applies to `algebraOfSetsType` instead of `measureableType`
+- in `ereal.v`:
+  + change defintion `mule` such that 0 x oo = 0
 
 ### Renamed
 
