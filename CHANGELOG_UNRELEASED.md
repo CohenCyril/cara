@@ -16,6 +16,8 @@
   + HB.mixin `AlgebraOfSets_from_RingOfSets`
   + HB.structure `AlgebraOfSets` and notation `algebraOfSetsType`
   + HB.instance `T_isAlgebraOfSets` in HB.builders `isAlgebraOfSets`
+- in `classical_sets.v`:
+  + lemmas `bigcupD1`, `bigcapD1`
 
 ### Changed
 
